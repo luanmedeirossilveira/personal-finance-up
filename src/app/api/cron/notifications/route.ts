@@ -104,7 +104,7 @@ export async function GET(req: NextRequest) {
 
   if (futureToNotify.length > 0) {
     // send email with list
-    await sendFutureBillReminder(adminUser.email, futureToNotify.map((f) => ({ name: f.name, amount: f.amount || 0, reminderDate: f.reminderDate, id: f.id })));
+    await sendFutureBillReminder(adminUser.email, futureToNotify.map((f) => ({ name: f.name, amount: f.amount || 0, reminderDate: f.reminderDate ?? undefined, id: f.id })));
     // mark as notified
     for (const f of futureToNotify) {
       await db.update(schema.futureBills).set({ notified: true }).where(eq(schema.futureBills.id, f.id));

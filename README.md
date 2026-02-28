@@ -164,3 +164,39 @@ src/
 scripts/
 └── seed.ts              # popular banco com dados 2026
 ```
+
+## Próximas Funcionalidades
+
+### Controle financeiro (core)
+
+[] Receitas além do salário (freelance, aluguel, renda extra) com categorias
+[] Meta de economia mensal com barra de progresso
+[] Histórico de variação de contas (ex: luz era R$191 em janeiro, R$268 em fevereiro — mostrar tendência)
+[] Projeção dos próximos 3 meses baseada nos dados atuais
+[] Campo de data de pagamento real (além do "está pago" — saber quando pagou)
+
+### Relatórios e visualização
+
+[] Exportar PDF do mês com todas as contas e status
+[] Gráfico de pizza por categoria (moradia, transporte, lazer...)
+[] Comparativo mês a mês de uma conta específica (ex: evolução da luz)
+[] Tela de "Dívidas" separada mostrando só parcelamentos com progresso visual (28/48)
+
+### Qualidade de vida
+
+[] Busca e filtro nas contas (por nome, categoria, status)
+[] Duplicar mês — copiar todas as contas recorrentes para o próximo mês com um clique
+[] Reordenar contas por drag and drop
+[] Modo escuro/claro (já tem escuro, adicionar toggle)
+[] PWA — instalar no celular como app
+
+### Inteligência
+
+[] Integração com o Radar Financeiro já implementado dentro do dashboard (card semanal visível na tela)
+[] Detectar automaticamente contas que terminaram o parcelamento (ex: 13/13 = quitada)
+[] Alerta quando o total do mês ultrapassa a renda
+
+### Dados externos
+
+[] Cotação do dólar/euro no dashboard (útil para planejar compras internacionais)
+[] Calculadora de antecipação do financiamento do carro (quanto economizaria quitando agora)

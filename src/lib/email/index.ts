@@ -227,3 +227,27 @@ export async function sendFutureBillReminder(
   });
 }
 
+export async function sendInsightsEmail(email: string, bodyText: string): Promise<void> {
+  const html = `<!DOCTYPE html>
+  <html>
+  <body style="margin:0;padding:0;background:#0f1a16;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+    <div style="max-width:680px;margin:32px auto;padding:36px;background:#162019;border-radius:12px;border:1px solid #2a3d31;">
+      <div style="margin-bottom:18px;">
+        <span style="font-size:20px;font-weight:800;color:#5ab28d;">Contas</span>
+        <span style="font-size:20px;font-weight:300;color:#8dcdb0;"> Cotidiano</span>
+        <div style="color:#4a6b58;font-size:12px;margin-top:6px;">Radar Financeiro Semanal</div>
+      </div>
+      <div style="color:#f0f9f4;font-size:14px;line-height:1.6;">${bodyText.replace(/\n/g, "<br/>")}</div>
+      <div style="margin-top:18px;color:#4a6b58;font-size:13px;">Próximo radar: sábado que vem 💚</div>
+    </div>
+  </body>
+  </html>`;
+
+  await resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: `💡 Radar Financeiro Semanal — Contas Cotidiano`,
+    html,
+  });
+}
+

@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { name, amount, month, year, installment, isPaid, dueDay, category, notes } = body;
+    const { name, amount, month, year, installment, isPaid, dueDay, category, notes, barCode, qrCode } = body;
 
     if (!name || amount === undefined || !month || !year) {
       return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
@@ -50,6 +50,8 @@ export async function POST(req: NextRequest) {
       dueDay,
       category,
       notes,
+      barCode,
+      qrCode,
     }).returning();
 
     return NextResponse.json(bill, { status: 201 });

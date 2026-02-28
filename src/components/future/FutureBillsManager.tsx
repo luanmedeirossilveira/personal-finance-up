@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { format, parseISO } from "date-fns";
+import showToast from "@/components/ui/toast";
 
 interface FutureBill {
   id?: number;
@@ -180,10 +181,8 @@ export default function FutureBillsManager() {
                               }),
                             });
                           fetchData();
-                          alert(
-                            "Adicionado ao radar de contas e marcado como notificado.",
-                          );
-                        } else alert("Erro ao adicionar ao radar.");
+                          showToast("Adicionado ao radar de contas e marcado como notificado.");
+                        } else showToast("Erro ao adicionar ao radar.");
                       }}
                       className="px-3 py-1 rounded-md"
                       style={{ background: "#389671", color: "#fff" }}

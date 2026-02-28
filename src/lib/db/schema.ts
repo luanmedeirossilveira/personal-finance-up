@@ -34,6 +34,9 @@ export const bills = sqliteTable("bills", {
   dueDay: integer("due_day"), // day of month
   category: text("category"), // 'moradia', 'transporte', 'saude', 'lazer', 'investimentos', 'outros'
   notes: text("notes"),
+  barCode: text("bar_code"),
+  qrCode: text("qr_code"),
+  attachments: text("attachments"),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").default(sql`(datetime('now'))`),
 });
@@ -61,6 +64,7 @@ export const futureBills = sqliteTable("future_bills", {
   notifyDaysBefore: integer("notify_days_before").default(3),
   notified: integer("notified", { mode: "boolean" }).default(false),
   notes: text("notes"),
+  attachments: text("attachments"),
   priority: text("priority"),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
 });

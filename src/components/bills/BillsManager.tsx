@@ -5,20 +5,13 @@ import { useSearchParams, useRouter } from "next/navigation";
 import {
   Plus,
   Check,
-  Pencil,
-  Trash2,
   ChevronLeft,
   ChevronRight,
-  FileText,
-  Receipt,
-  X,
-  Copy,
-  QrCode,
 } from "lucide-react";
-import showToast from "@/components/ui/toast";
 import showConfirm from "@/components/ui/confirm";
 import SalariesManager from "@/components/salaries/SalariesManager";
 import BillForm from "./BillForm";
+import BillsMobileActions from "./BillsMobileActions";
 
 export interface Bill {
   id: number;
@@ -416,173 +409,17 @@ export default function BillsManager() {
                   </span>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    {/* Fatura */}
-                    {(() => {
-                      const att = parseAttachments((bill as any).attachments);
-                      return (
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {/* Fatura */}
-                          <div className="relative group">
-                            {att.fatura ? (
-                              <div className="flex items-center">
-                                <a
-                                  href={att.fatura.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="py-1 rounded-md w-8 h-8 flex items-center justify-center transition-colors"
-                                  title="Ver fatura"
-                                  style={{ color: "#5ab28d" }}
-                                >
-                                  <FileText size={14} />
-                                </a>
-                                <button
-                                  onClick={() =>
-                                    handleDeleteAttachment(bill.id, "fatura")
-                                  }
-                                  className="py-1 rounded-md w-8 h-8 flex items-center justify-center transition-colors"
-                                  style={{ color: "#4a6b58" }}
-                                  title="Remover fatura"
-                                >
-                                  <X size={12} />
-                                </button>
-                              </div>
-                            ) : (
-                              <label
-                                className="p-1 rounded-md w-8 h-8 flex items-center justify-center transition-colors cursor-pointer"
-                                title="Anexar fatura"
-                                style={{ color: "#4a6b58" }}
-                              >
-                                <input
-                                  type="file"
-                                  className="hidden"
-                                  accept=".pdf,.jpg,.jpeg,.png"
-                                  onChange={(e) =>
-                                    handleUpload(
-                                      bill.id,
-                                      "fatura",
-                                      e.target.files?.[0],
-                                    )
-                                  }
-                                />
-                                <FileText size={14} />
-                              </label>
-                            )}
-                          </div>
-                          {/* Bar/QR buttons */}
-                          {bill.barCode && (
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await navigator.clipboard.writeText(bill.barCode!);
-                                  showToast("Código de barras copiado");
-                                } catch {
-                                  showToast("Falha ao copiar código de barras");
-                                }
-                              }}
-                              className="p-1 rounded-md w-8 h-8 flex items-center justify-center transition-colors"
-                              style={{ color: "#4a6b58" }}
-                              title="Copiar código de barras"
-                            >
-                              <Copy size={14} />
-                            </button>
-                          )}
-                          {bill.qrCode && (
-                            <button
-                              onClick={async () => {
-                                const v = bill.qrCode!;
-                                if (v.startsWith("http://") || v.startsWith("https://")) {
-                                  window.open(v, "_blank", "noopener,noreferrer");
-                                  return;
-                                }
-                                try {
-                                  await navigator.clipboard.writeText(v);
-                                  showToast("QR copiado");
-                                } catch {
-                                  showToast("Falha ao copiar QR");
-                                }
-                              }}
-                              className="p-1 rounded-md w-8 h-8 flex items-center justify-center transition-colors"
-                              style={{ color: "#4a6b58" }}
-                              title="Abrir/ copiar QR"
-                            >
-                              <QrCode size={14} />
-                            </button>
-                          )}
-
-                          {/* Comprovante */}
-                          <div className="relative group">
-                            {att.comprovante ? (
-                              <div className="flex items-center">
-                                <a
-                                  href={att.comprovante.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="p-1 rounded-md w-8 h-8 flex items-center justify-center transition-colors"
-                                  title="Ver comprovante"
-                                  style={{ color: "#5ab28d" }}
-                                >
-                                  <Receipt size={14} />
-                                </a>
-                                <button
-                                  onClick={() =>
-                                    handleDeleteAttachment(
-                                      bill.id,
-                                      "comprovante",
-                                    )
-                                  }
-                                  className="p-1 rounded-md w-8 h-8 flex items-center justify-center transition-colors"
-                                  style={{ color: "#4a6b58" }}
-                                  title="Remover comprovante"
-                                >
-                                  <X size={12} />
-                                </button>
-                              </div>
-                            ) : (
-                              <label
-                                className="p-1 rounded-md w-8 h-8 flex items-center justify-center transition-colors cursor-pointer"
-                                title="Anexar comprovante"
-                                style={{ color: "#4a6b58" }}
-                              >
-                                <input
-                                  type="file"
-                                  className="hidden"
-                                  accept=".pdf,.jpg,.jpeg,.png"
-                                  onChange={(e) =>
-                                    handleUpload(
-                                      bill.id,
-                                      "comprovante",
-                                      e.target.files?.[0],
-                                    )
-                                  }
-                                />
-                                <Receipt size={14} />
-                              </label>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })()}
-                    <button
-                      onClick={() => {
-                        setEditBill(bill);
-                        setShowForm(true);
-                      }}
-                      className="p-1 rounded-md w-8 h-8 flex items-center justify-center transition-colors"
-                      style={{ color: "#4a6b58" }}
-                      title="Editar"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      onClick={() => deleteBill(bill.id)}
-                      className="p-1 rounded-md w-8 h-8 flex items-center justify-center transition-colors hover:bg-red-500/10"
-                      style={{ color: "#4a6b58" }}
-                      title="Remover"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+                  <BillsMobileActions
+                    bill={bill}
+                    att={parseAttachments((bill as any).attachments)}
+                    onEdit={() => {
+                      setEditBill(bill);
+                      setShowForm(true);
+                    }}
+                    onDelete={() => deleteBill(bill.id)}
+                    onUpload={handleUpload}
+                    onDeleteAttachment={handleDeleteAttachment}
+                  />
                 </div>
               );
             })}

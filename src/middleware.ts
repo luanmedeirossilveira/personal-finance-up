@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
-const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/auth/verify", "/api/cron"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/api/auth/login",
+  "/api/auth/verify",
+  "/api/cron",
+  "/api/auth/forgot",
+  "/api/auth/reset",
+];
 const STATIC_PATHS = ["/_next", "/favicon", "/icons/", "/manifest.json", "/sw.js"];
 
 export async function middleware(req: NextRequest) {
@@ -19,7 +26,7 @@ export async function middleware(req: NextRequest) {
   const token = req.cookies.get("contas_session")?.value;
 
   if (!token) {
-    if (pathname.startsWith("/api/")) {
+    if (pathname.startsWith("/api/") || pathname.startsWith("/reset")) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
     return NextResponse.redirect(new URL("/login", req.url));

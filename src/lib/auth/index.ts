@@ -141,3 +141,48 @@ export async function verifyEmailToken(token: string) {
 
   return dbToken.userId;
 }
+
+export async function savePasswordResetToken(
+  userId: number,
+  token: string
+): Promise<void> {
+  const expiresAt = new Date();
+  expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour expiry
+
+  // Invalidate previous password_reset tokens for user
+  await db
+    .delete(schema.authTokens)
+    .where(
+      and(
+        eq(schema.authTokens.userId, userId),
+        eq(schema.authTokens.type, "password_reset")
+      )
+    )
+    .catch(() => {});
+
+  await db.insert(schema.authTokens).values({
+    userId,
+    token,
+    type: "password_reset",
+    expiresAt: expiresAt.toISOString(),
+  });
+}
+
+export async function verifyPasswordResetToken(token: string) {
+  const dbToken = await db.query.authTokens.findFirst({
+    where: and(
+      eq(schema.authTokens.token, token),
+      eq(schema.authTokens.type, "password_reset"),
+      gt(schema.authTokens.expiresAt, new Date().toISOString())
+    ),
+  });
+
+  if (!dbToken) return null;
+
+  // consume token
+  await db
+    .delete(schema.authTokens)
+    .where(eq(schema.authTokens.id, dbToken.id));
+
+  return dbToken.userId;
+}

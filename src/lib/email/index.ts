@@ -251,3 +251,30 @@ export async function sendInsightsEmail(email: string, bodyText: string): Promis
   });
 }
 
+export async function sendPasswordResetEmail(email: string, token: string): Promise<void> {
+  const url = `${process.env.NEXTAUTH_URL}/login/reset?token=${token}`;
+
+  await resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: "🔑 Redefinir senha — Contas Cotidiano",
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <body style="margin:0;padding:0;background:#0f1a16;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+        <div style="max-width:520px;margin:48px auto;padding:40px;background:#162019;border-radius:16px;border:1px solid #2a3d31;">
+          <div style="margin-bottom:24px;">
+            <span style="font-size:22px;font-weight:800;color:#5ab28d;">Contas</span>
+            <span style="font-size:22px;font-weight:300;color:#8dcdb0;"> Cotidiano</span>
+          </div>
+          <h2 style="color:#f0f9f4;font-size:18px;margin:0 0 12px;">Redefinir sua senha</h2>
+          <p style="color:#8dcdb0;font-size:14px;line-height:1.6;margin:0 0 20px;">Você solicitou a redefinição de senha. Clique no botão abaixo para definir uma nova senha. O link expira em <strong>1 hora</strong>.</p>
+          <a href="${url}" style="display:inline-block;background:#389671;color:#fff;text-decoration:none;padding:12px 26px;border-radius:10px;font-weight:600;">Redefinir senha</a>
+          <p style="color:#4a6b58;font-size:12px;margin:20px 0 0;">Se você não solicitou, ignore este e‑mail.</p>
+        </div>
+      </body>
+      </html>
+    `,
+  });
+}
+

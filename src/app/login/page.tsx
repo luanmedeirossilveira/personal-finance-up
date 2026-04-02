@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -106,8 +107,7 @@ export default function LoginPage() {
             </button>
 
             <p className="text-center text-xs" style={{ color: "#4a6b58" }}>
-              Primeiro acesso? Insira seu email e a senha padrão.<br />
-              Um link de verificação será enviado.
+              <Link href="/login/forgot">Esqueceu a senha?</Link><br />
             </p>
           </form>
         ) : (

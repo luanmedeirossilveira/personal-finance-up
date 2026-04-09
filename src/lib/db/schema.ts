@@ -32,13 +32,29 @@ export const bills = sqliteTable("bills", {
   installment: text("installment"), // '3/4', 'SEMPRE', 'VARIAVEL', 'ÚNICO'
   isPaid: integer("is_paid", { mode: "boolean" }).default(false),
   dueDay: integer("due_day"), // day of month
-  category: text("category"), // 'moradia', 'transporte', 'saude', 'lazer', 'investimentos', 'outros'
+  category: text("category"), // 'moradia', 'transporte', 'saude', 'lazer', 'investimentos', 'cartão', 'outros'
   notes: text("notes"),
   barCode: text("bar_code"),
   qrCode: text("qr_code"),
   attachments: text("attachments"),
+  type: text("type").default("NORMAL"), // 'NORMAL' | 'CARD'
+  cardLast4: text("card_last4"), // últimos 4 dígitos (quando type='CARD')
+  cardNickname: text("card_nickname"), // apelido do cartão (ex: "Nubank Luan")
   createdAt: text("created_at").default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").default(sql`(datetime('now'))`),
+});
+
+export const cardTransactions = sqliteTable("card_transactions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  billId: integer("bill_id")
+    .notNull()
+    .references(() => bills.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  amount: real("amount").notNull(),
+  installment: text("installment"), // '3/12', etc
+  category: text("category"),
+  date: text("date"), // data da transação (opcional)
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
 });
 
 export const salaries = sqliteTable("salaries", {
@@ -77,3 +93,5 @@ export type NewBill = typeof bills.$inferInsert;
 export type NewSalary = typeof salaries.$inferInsert;
 export type FutureBill = typeof futureBills.$inferSelect;
 export type NewFutureBill = typeof futureBills.$inferInsert;
+export type CardTransaction = typeof cardTransactions.$inferSelect;
+export type NewCardTransaction = typeof cardTransactions.$inferInsert;

@@ -15,7 +15,7 @@ export default async function ContasPage() {
           Contas
         </h1>
         <p className="text-sm mt-1" style={{ color: "#4a6b58" }}>
-          Gerencie suas contas mês a mês
+          Gerencie suas contas e faturas de cartão mês a mês
         </p>
       </div>
       <Suspense fallback={<div className="card p-8 text-center" style={{ color: "#4a6b58" }}>Carregando...</div>}>

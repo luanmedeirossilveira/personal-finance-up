@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Bill } from "./BillsManager";
-import { Check } from "lucide-react";
+import { Check, CreditCard, Receipt } from "lucide-react";
 
 const CATEGORIES = [
   "moradia",
@@ -25,6 +25,7 @@ export default function BillForm({
   onClose: () => void;
   onSave: () => void;
 }>) {
+  const [type, setType] = useState<"NORMAL" | "CARD">(bill?.type === "CARD" ? "CARD" : "NORMAL");
   const [name, setName] = useState(bill?.name || "");
   const [amount, setAmount] = useState(bill?.amount?.toString() || "");
   const [installment, setInstallment] = useState(bill?.installment || "");
@@ -34,13 +35,15 @@ export default function BillForm({
   const [notes, setNotes] = useState(bill?.notes || "");
   const [barCode, setBarCode] = useState(bill?.barCode || "");
   const [qrCode, setQrCode] = useState(bill?.qrCode || "");
+  const [cardLast4, setCardLast4] = useState(bill?.cardLast4 || "");
+  const [cardNickname, setCardNickname] = useState(bill?.cardNickname || "");
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
 
-    const payload = {
+    const payload: any = {
       name: name.trim().toUpperCase(),
       amount: parseFloat(amount.replace(",", ".")),
       month,
@@ -48,10 +51,13 @@ export default function BillForm({
       installment: installment || null,
       isPaid,
       dueDay: dueDay ? parseInt(dueDay) : null,
-      category: category || null,
+      category: type === "CARD" ? "cartão" : (category || null),
       notes: notes || null,
-      barCode: barCode || null,
-      qrCode: qrCode || null,
+      barCode: type === "CARD" ? null : (barCode || null),
+      qrCode: type === "CARD" ? null : (qrCode || null),
+      type,
+      cardLast4: type === "CARD" ? cardLast4 : null,
+      cardNickname: type === "CARD" ? cardNickname : null,
     };
 
     if (bill) {
@@ -92,19 +98,92 @@ export default function BillForm({
             {bill ? "Editar conta" : "Nova conta"}
           </h3>
 
+          {/* Type selector */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setType("NORMAL")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                type === "NORMAL" ? "ring-2 ring-offset-1" : ""
+              }`}
+              style={{
+                background: type === "NORMAL" ? "#389671" : "#1c2b22",
+                color: type === "NORMAL" ? "#fff" : "#8dcdb0",
+                borderColor: "#2a3d31",
+                ringColor: "#389671",
+                ringOffsetColor: "#0f1a15",
+              }}
+            >
+              <Receipt size={16} />
+              Conta normal
+            </button>
+            <button
+              type="button"
+              onClick={() => setType("CARD")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                type === "CARD" ? "ring-2 ring-offset-1" : ""
+              }`}
+              style={{
+                background: type === "CARD" ? "#389671" : "#1c2b22",
+                color: type === "CARD" ? "#fff" : "#8dcdb0",
+                borderColor: "#2a3d31",
+                ringColor: "#389671",
+                ringOffsetColor: "#0f1a15",
+              }}
+            >
+              <CreditCard size={16} />
+              Fatura cartão
+            </button>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
+            {/* Card-specific fields */}
+            {type === "CARD" && (
+              <>
+                <div>
+                  <label
+                    className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
+                    style={{ color: "#8dcdb0" }}
+                  >
+                    Últimos 4 dígitos
+                  </label>
+                  <input
+                    value={cardLast4}
+                    onChange={(e) => setCardLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    className="input-base"
+                    placeholder="1234"
+                    maxLength={4}
+                  />
+                </div>
+                <div>
+                  <label
+                    className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
+                    style={{ color: "#8dcdb0" }}
+                  >
+                    Apelido
+                  </label>
+                  <input
+                    value={cardNickname}
+                    onChange={(e) => setCardNickname(e.target.value)}
+                    className="input-base"
+                    placeholder="Nubank Luan"
+                  />
+                </div>
+              </>
+            )}
+
+            <div className={type === "CARD" ? "col-span-2" : "col-span-2"}>
               <label
                 className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
                 style={{ color: "#8dcdb0" }}
               >
-                Nome *
+                {type === "CARD" ? "Nome da fatura *" : "Nome *"}
               </label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="input-base"
-                placeholder="ALUGUEL"
+                placeholder={type === "CARD" ? "FATURA NUBANK ABR/2026" : "ALUGUEL"}
                 required
               />
             </div>
@@ -113,7 +192,7 @@ export default function BillForm({
                 className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
                 style={{ color: "#8dcdb0" }}
               >
-                Valor *
+                {type === "CARD" ? "Valor total *" : "Valor *"}
               </label>
               <input
                 value={amount}
@@ -154,26 +233,28 @@ export default function BillForm({
                 placeholder="SEMPRE ou 3/12"
               />
             </div>
-            <div>
-              <label
-                className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
-                style={{ color: "#8dcdb0" }}
-              >
-                Categoria
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="input-base"
-              >
-                <option value="">Selecionar...</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c} style={{ background: "#1c2b22" }}>
-                    {c.charAt(0).toUpperCase() + c.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {type === "NORMAL" && (
+              <div>
+                <label
+                  className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
+                  style={{ color: "#8dcdb0" }}
+                >
+                  Categoria
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="input-base"
+                >
+                  <option value="">Selecionar...</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c} style={{ background: "#1c2b22" }}>
+                      {c.charAt(0).toUpperCase() + c.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="col-span-2">
               <label
                 className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
@@ -188,34 +269,38 @@ export default function BillForm({
                 placeholder="Notas opcionais..."
               />
             </div>
-            <div className="col-span-2">
-              <label
-                className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
-                style={{ color: "#8dcdb0" }}
-              >
-                Código de barras
-              </label>
-              <input
-                value={barCode}
-                onChange={(e) => setBarCode(e.target.value)}
-                className="input-base"
-                placeholder="Código de barras (opcional)"
-              />
-            </div>
-            <div className="col-span-2">
-              <label
-                className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
-                style={{ color: "#8dcdb0" }}
-              >
-                QR Code
-              </label>
-              <input
-                value={qrCode}
-                onChange={(e) => setQrCode(e.target.value)}
-                className="input-base"
-                placeholder="QR Code (opcional)"
-              />
-            </div>
+            {type === "NORMAL" && (
+              <>
+                <div className="col-span-2">
+                  <label
+                    className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
+                    style={{ color: "#8dcdb0" }}
+                  >
+                    Código de barras
+                  </label>
+                  <input
+                    value={barCode}
+                    onChange={(e) => setBarCode(e.target.value)}
+                    className="input-base"
+                    placeholder="Código de barras (opcional)"
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label
+                    className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
+                    style={{ color: "#8dcdb0" }}
+                  >
+                    QR Code
+                  </label>
+                  <input
+                    value={qrCode}
+                    onChange={(e) => setQrCode(e.target.value)}
+                    className="input-base"
+                    placeholder="QR Code (opcional)"
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           <label className="flex items-center gap-3 cursor-pointer">

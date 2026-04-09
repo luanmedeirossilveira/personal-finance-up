@@ -7,11 +7,15 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  CreditCard,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import showConfirm from "@/components/ui/confirm";
 import SalariesManager from "@/components/salaries/SalariesManager";
 import BillForm from "./BillForm";
 import BillsMobileActions from "./BillsMobileActions";
+import CardBillTransactions from "./CardBillTransactions";
 
 export interface Bill {
   id: number;
@@ -26,6 +30,9 @@ export interface Bill {
   notes?: string;
   barCode?: string | null;
   qrCode?: string | null;
+  type?: "NORMAL" | "CARD";
+  cardLast4?: string | null;
+  cardNickname?: string | null;
 }
 
 export interface Salary {
@@ -75,6 +82,7 @@ export default function BillsManager() {
   const [showForm, setShowForm] = useState(false);
   const [editBill, setEditBill] = useState<Bill | null>(null);
   const [showSalaries, setShowSalaries] = useState(false);
+  const [expandedCardBills, setExpandedCardBills] = useState<number[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -340,86 +348,143 @@ export default function BillsManager() {
             {bills.map((bill) => {
               const dueSoon = isDueSoon(bill);
               const overdue = isOverdue(bill);
+              const isCard = bill.type === "CARD";
+              const isExpanded = expandedCardBills.includes(bill.id);
+              
               return (
-                <div
-                  key={bill.id}
-                  className="flex items-center gap-3 px-3 py-2 transition-colors hover:bg-white/[0.02]"
-                >
-                  {/* Paid toggle */}
-                  <button
-                    onClick={() => togglePaid(bill)}
-                    className="w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
-                    style={{
-                      borderColor: bill.isPaid ? "#389671" : "#2a3d31",
-                      background: bill.isPaid ? "#389671" : "transparent",
-                    }}
+                <div key={bill.id}>
+                  <div
+                    className="flex items-center gap-3 px-3 py-2 transition-colors hover:bg-white/[0.02]"
                   >
-                    {bill.isPaid && (
-                      <Check size={12} strokeWidth={3} color="#fff" />
-                    )}
-                  </button>
+                    {/* Paid toggle */}
+                    <button
+                      onClick={() => togglePaid(bill)}
+                      className="w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                      style={{
+                        borderColor: bill.isPaid ? "#389671" : "#2a3d31",
+                        background: bill.isPaid ? "#389671" : "transparent",
+                      }}
+                    >
+                      {bill.isPaid && (
+                        <Check size={12} strokeWidth={3} color="#fff" />
+                      )}
+                    </button>
 
-                  {/* Name & details */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="text-sm font-medium truncate"
-                        style={{
-                          color: bill.isPaid ? "#4a6b58" : "#f0f9f4",
-                          textDecoration: bill.isPaid ? "line-through" : "none",
-                        }}
+                    {/* Card icon for card bills */}
+                    {isCard && (
+                      <div
+                        className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: "#1c2b22" }}
                       >
-                        {bill.name}
-                      </span>
-                      {(dueSoon || overdue) && (
+                        <CreditCard size={14} style={{ color: "#8dcdb0" }} />
+                      </div>
+                    )}
+
+                    {/* Name & details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
                         <span
-                          className={`text-xs px-1.5 py-0.5 rounded-md font-medium flex-shrink-0 ${overdue ? "badge-overdue" : "badge-pending"}`}
+                          className="text-sm font-medium truncate"
+                          style={{
+                            color: bill.isPaid ? "#4a6b58" : "#f0f9f4",
+                            textDecoration: bill.isPaid ? "line-through" : "none",
+                          }}
                         >
-                          {overdue
-                            ? "Vencida"
-                            : `Vence em ${bill.dueDay! - today}d`}
+                          {bill.name}
                         </span>
-                      )}
+                        {isCard && bill.cardLast4 && (
+                          <span className="text-xs" style={{ color: "#4a6b58" }}>
+                            •••• {bill.cardLast4}
+                          </span>
+                        )}
+                        {(dueSoon || overdue) && (
+                          <span
+                            className={`text-xs px-1.5 py-0.5 rounded-md font-medium flex-shrink-0 ${overdue ? "badge-overdue" : "badge-pending"}`}
+                          >
+                            {overdue
+                              ? "Vencida"
+                              : `Vence em ${bill.dueDay! - today}d`}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {isCard && bill.cardNickname && (
+                          <span className="text-xs" style={{ color: "#5ab28d" }}>
+                            {bill.cardNickname}
+                          </span>
+                        )}
+                        {bill.installment && (
+                          <span className="text-xs" style={{ color: "#4a6b58" }}>
+                            {bill.installment}
+                          </span>
+                        )}
+                        {bill.dueDay && (
+                          <span className="text-xs" style={{ color: "#4a6b58" }}>
+                            dia {bill.dueDay}
+                          </span>
+                        )}
+                        {!isCard && bill.category && (
+                          <span className="text-xs" style={{ color: "#4a6b58" }}>
+                            {bill.category}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {bill.installment && (
-                        <span className="text-xs" style={{ color: "#4a6b58" }}>
-                          {bill.installment}
-                        </span>
-                      )}
-                      {bill.dueDay && (
-                        <span className="text-xs" style={{ color: "#4a6b58" }}>
-                          dia {bill.dueDay}
-                        </span>
-                      )}
-                      {bill.category && (
-                        <span className="text-xs" style={{ color: "#4a6b58" }}>
-                          {bill.category}
-                        </span>
-                      )}
-                    </div>
+
+                    {/* Amount */}
+                    <span
+                      className="text-sm font-bold font-numeric flex-shrink-0 text-right w-28"
+                      style={{ color: bill.isPaid ? "#4a6b58" : "#f0f9f4" }}
+                    >
+                      {BRL(bill.amount)}
+                    </span>
+
+                    {/* Expand button for card bills */}
+                    {isCard && (
+                      <button
+                        onClick={() => {
+                          setExpandedCardBills((prev) =>
+                            prev.includes(bill.id)
+                              ? prev.filter((id) => id !== bill.id)
+                              : [...prev, bill.id]
+                          );
+                        }}
+                        className="p-1.5 rounded-lg transition-colors hover:bg-white/5"
+                        style={{ color: "#8dcdb0" }}
+                      >
+                        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </button>
+                    )}
+
+                    {/* Actions */}
+                    <BillsMobileActions
+                      bill={bill}
+                      att={parseAttachments((bill as any).attachments)}
+                      onEdit={() => {
+                        setEditBill(bill);
+                        setShowForm(true);
+                      }}
+                      onDelete={() => deleteBill(bill.id)}
+                      onUpload={handleUpload}
+                      onDeleteAttachment={handleDeleteAttachment}
+                    />
                   </div>
 
-                  {/* Amount */}
-                  <span
-                    className="text-sm font-bold font-numeric flex-shrink-0 text-right w-28"
-                    style={{ color: bill.isPaid ? "#4a6b58" : "#f0f9f4" }}
-                  >
-                    {BRL(bill.amount)}
-                  </span>
-
-                  {/* Actions */}
-                  <BillsMobileActions
-                    bill={bill}
-                    att={parseAttachments((bill as any).attachments)}
-                    onEdit={() => {
-                      setEditBill(bill);
-                      setShowForm(true);
-                    }}
-                    onDelete={() => deleteBill(bill.id)}
-                    onUpload={handleUpload}
-                    onDeleteAttachment={handleDeleteAttachment}
-                  />
+                  {/* Card transactions (expandable) */}
+                  {isCard && isExpanded && (
+                    <div className="px-4 pb-3 ml-9" style={{ background: "#0f1a15" }}>
+                      <CardBillTransactions
+                        billId={bill.id}
+                        onTotalChange={(newTotal) => {
+                          setBills((prev) =>
+                            prev.map((b) =>
+                              b.id === bill.id ? { ...b, amount: newTotal } : b
+                            )
+                          );
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               );
             })}

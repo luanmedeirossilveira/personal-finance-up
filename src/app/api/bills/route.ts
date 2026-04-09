@@ -33,11 +33,14 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { name, amount, month, year, installment, isPaid, dueDay, category, notes, barCode, qrCode } = body;
+    const { name, amount, month, year, installment, isPaid, dueDay, category, notes, barCode, qrCode, type, cardLast4, cardNickname } = body;
 
     if (!name || amount === undefined || !month || !year) {
       return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
     }
+
+    // Se for tipo CARD, categoria deve ser 'cartão'
+    const finalCategory = type === "CARD" ? "cartão" : category;
 
     const [bill] = await db.insert(schema.bills).values({
       userId: user.id,
@@ -48,10 +51,13 @@ export async function POST(req: NextRequest) {
       installment,
       isPaid: isPaid || false,
       dueDay,
-      category,
+      category: finalCategory,
       notes,
       barCode,
       qrCode,
+      type: type || "NORMAL",
+      cardLast4: type === "CARD" ? cardLast4 : null,
+      cardNickname: type === "CARD" ? cardNickname : null,
     }).returning();
 
     return NextResponse.json(bill, { status: 201 });

@@ -110,8 +110,6 @@ export default function BillForm({
                 background: type === "NORMAL" ? "#389671" : "#1c2b22",
                 color: type === "NORMAL" ? "#fff" : "#8dcdb0",
                 borderColor: "#2a3d31",
-                ringColor: "#389671",
-                ringOffsetColor: "#0f1a15",
               }}
             >
               <Receipt size={16} />
@@ -127,8 +125,6 @@ export default function BillForm({
                 background: type === "CARD" ? "#389671" : "#1c2b22",
                 color: type === "CARD" ? "#fff" : "#8dcdb0",
                 borderColor: "#2a3d31",
-                ringColor: "#389671",
-                ringOffsetColor: "#0f1a15",
               }}
             >
               <CreditCard size={16} />

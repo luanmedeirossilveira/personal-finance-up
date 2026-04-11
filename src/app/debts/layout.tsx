@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import Sidebar from "@/components/dashboard/Sidebar";
 
-export default async function ContasLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function DebtsLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const user = await getSession();
   if (!user) redirect("/login");
 

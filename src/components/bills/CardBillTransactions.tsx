@@ -159,21 +159,19 @@ export default function CardBillTransactions({
 
       {/* Transaction form modal */}
       {showForm && (
-        <div className="mt-3 p-3 rounded-lg" style={{ background: "#1c2b22", border: "1px solid #2a3d31" }}>
-          <CardTransactionForm
-            billId={billId}
-            transaction={editTransaction}
-            onClose={() => {
-              setShowForm(false);
-              setEditTransaction(null);
-            }}
-            onSave={() => {
-              setShowForm(false);
-              setEditTransaction(null);
-              fetchTransactions();
-            }}
-          />
-        </div>
+        <CardTransactionForm
+          billId={billId}
+          transaction={editTransaction}
+          onClose={() => {
+            setShowForm(false);
+            setEditTransaction(null);
+          }}
+          onSave={() => {
+            setShowForm(false);
+            setEditTransaction(null);
+            fetchTransactions();
+          }}
+        />
       )}
     </div>
   );

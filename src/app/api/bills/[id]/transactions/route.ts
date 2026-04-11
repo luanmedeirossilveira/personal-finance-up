@@ -26,7 +26,7 @@ export async function GET(
   const user = await getSession();
   if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-  const billId = parseInt(params.id);
+  const billId = Number.parseInt(params.id);
 
   // Verificar se a bill pertence ao usuário e é do tipo CARD
   const bill = await db.query.bills.findFirst({
@@ -46,7 +46,7 @@ export async function GET(
 
   const transactions = await db.query.cardTransactions.findMany({
     where: eq(schema.cardTransactions.billId, billId),
-    orderBy: (t, { asc }) => [asc(t.name)],
+    orderBy: (t, { desc }) => [desc(t.date), desc(t.id)],
   });
 
   return NextResponse.json(transactions);
@@ -59,7 +59,7 @@ export async function POST(
   const user = await getSession();
   if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-  const billId = parseInt(params.id);
+  const billId = Number.parseInt(params.id);
 
   // Verificar se a bill pertence ao usuário e é do tipo CARD
   const bill = await db.query.bills.findFirst({
@@ -88,7 +88,7 @@ export async function POST(
     const [transaction] = await db.insert(schema.cardTransactions).values({
       billId,
       name,
-      amount: parseFloat(amount),
+      amount: Number.parseFloat(amount),
       installment: installment || null,
       category: category || null,
       date: date || null,

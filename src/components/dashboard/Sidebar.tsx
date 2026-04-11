@@ -10,12 +10,14 @@ import {
   Menu,
   X,
   TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/contas", label: "Contas", icon: Receipt },
   { href: "/future", label: "Futuras", icon: TrendingUp },
+  { href: "/debts", label: "Dívidas", icon: TrendingDown },
 ];
 
 export default function Sidebar() {

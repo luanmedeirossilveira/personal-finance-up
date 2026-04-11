@@ -346,7 +346,7 @@ export default function FutureBillsManager() {
               <div className="card p-6 w-full sm:max-w-md max-h-[80vh] overflow-auto mt-10 sm:mt-0">
                 <h3 className="text-base font-black">Confirmar exclusão</h3>
                 <p className="mt-2" style={{ color: "#4a6b58" }}>
-                  Remover "{showDelete.name}" das contas futuras?
+                  Remover &quot;{showDelete.name}&quot; das contas futuras?
                 </p>
                 <div className="flex justify-end gap-2 mt-4">
                   <button

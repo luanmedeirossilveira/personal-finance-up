@@ -134,9 +134,10 @@ export default function BillForm({
       <div className="fixed inset-0 z-50 flex justify-center p-4 items-end sm:items-start">
         <form
           onSubmit={handleSubmit}
-          className="card rounded-t-2xl sm:rounded-2xl p-6 space-y-4 w-full sm:max-w-md max-h-[90vh] overflow-auto mt-0 sm:mt-[20vh]"
+          className="card rounded-t-2xl sm:rounded-2xl p-6 space-y-4 w-full sm:max-w-md max-h-[90vh] overflow-visible mt-0 sm:mt-[20vh] relative z-[60]"
           onClick={(e) => e.stopPropagation()}
         >
+          <div className="max-h-[calc(90vh-3rem)] overflow-y-auto pr-1">
           <h3
             className="text-base font-black"
             style={{ fontFamily: "var(--font-display)" }}
@@ -325,7 +326,7 @@ export default function BillForm({
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="input-base"
+                  className="input-base relative z-[70]"
                 >
                   <option value="">Selecionar...</option>
                   {CATEGORIES.map((c) => (
@@ -421,6 +422,7 @@ export default function BillForm({
             >
               {saving ? "Salvando..." : bill ? "Salvar" : "Adicionar"}
             </button>
+          </div>
           </div>
         </form>
       </div>

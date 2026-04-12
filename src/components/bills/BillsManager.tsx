@@ -5,14 +5,15 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Plus,
+  Copy,
   Check,
   ChevronLeft,
   ChevronRight,
-  CreditCard,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
 import showConfirm from "@/components/ui/confirm";
+import showToast from "@/components/ui/toast";
 import SalariesManager from "@/components/salaries/SalariesManager";
 import BillForm from "./BillForm";
 import BillsMobileActions from "./BillsMobileActions";
@@ -50,6 +51,12 @@ export interface Attachments {
   comprovante?: { fileId: string; url: string; name: string };
 }
 
+interface CardTransaction {
+  id: number;
+  amount: number;
+  installment?: string | null;
+}
+
 const MONTHS = [
   "Janeiro",
   "Fevereiro",
@@ -67,6 +74,45 @@ const MONTHS = [
 
 const BRL = (v: number) =>
   `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+
+function getNextMonthYear(month: number, year: number) {
+  if (month === 12) return { nextMonth: 1, nextYear: year + 1 };
+  return { nextMonth: month + 1, nextYear: year };
+}
+
+function incrementInstallment(installment?: string) {
+  const normalized = (installment || "").trim();
+  if (!normalized) return null;
+
+  const installmentRegex = /^(\d+)\s*\/\s*(\d+)$/;
+  const match = installmentRegex.exec(normalized);
+  if (!match) return normalized;
+
+  const current = Number.parseInt(match[1], 10);
+  const total = Number.parseInt(match[2], 10);
+  if (!Number.isFinite(current) || !Number.isFinite(total) || current >= total) {
+    return null;
+  }
+
+  return `${current + 1}/${total}`;
+}
+
+function incrementStrictInstallment(installment?: string | null) {
+  const normalized = (installment || "").trim();
+  if (!normalized) return null;
+
+  const installmentRegex = /^(\d+)\s*\/\s*(\d+)$/;
+  const match = installmentRegex.exec(normalized);
+  if (!match) return null;
+
+  const current = Number.parseInt(match[1], 10);
+  const total = Number.parseInt(match[2], 10);
+  if (!Number.isFinite(current) || !Number.isFinite(total) || current >= total) {
+    return null;
+  }
+
+  return `${current + 1}/${total}`;
+}
 
 // v2: configuração visual de ownership
 const OWNERSHIP_CONFIG: Record<
@@ -101,10 +147,10 @@ export default function BillsManager() {
 
   const now = new Date();
   const [month, setMonth] = useState(
-    parseInt(searchParams.get("month") || String(now.getMonth() + 1)),
+    Number.parseInt(searchParams.get("month") || String(now.getMonth() + 1), 10),
   );
   const [year, setYear] = useState(
-    parseInt(searchParams.get("year") || String(now.getFullYear())),
+    Number.parseInt(searchParams.get("year") || String(now.getFullYear()), 10),
   );
   const [ownershipFilter, setOwnershipFilter] =
     useState<OwnershipFilter>("all");
@@ -116,6 +162,7 @@ export default function BillsManager() {
   const [editBill, setEditBill] = useState<Bill | null>(null);
   const [showSalaries, setShowSalaries] = useState(false);
   const [expandedCardBills, setExpandedCardBills] = useState<number[]>([]);
+  const [migrating, setMigrating] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -147,6 +194,140 @@ export default function BillsManager() {
   function nextMonth() {
     if (month === 12) navigate(1, year + 1);
     else navigate(month + 1, year);
+  }
+
+  async function migrateBillsToNextMonth() {
+    if (bills.length === 0) {
+      showToast("Sem contas para migrar neste mês.");
+      return;
+    }
+
+    const { nextMonth, nextYear } = getNextMonthYear(month, year);
+    const ok = await showConfirm(
+      `Migrar ${bills.length} conta(s) para ${MONTHS[nextMonth - 1]}/${nextYear}? As parcelas serão avançadas em +1 quando aplicável.`,
+    );
+    if (!ok) return;
+
+    setMigrating(true);
+    try {
+      const existingRes = await fetch(`/api/bills?month=${nextMonth}&year=${nextYear}`);
+      if (!existingRes.ok) throw new Error("Erro ao buscar contas do próximo mês");
+      const existingNextMonthBills: Bill[] = await existingRes.json();
+
+      const existingByName = new Map(
+        existingNextMonthBills.map((b) => [b.name.trim().toLowerCase(), b]),
+      );
+
+      const nextBills = await Promise.all(
+        bills.map(async (bill) => {
+          if (bill.type === "CARD") {
+            const txRes = await fetch(`/api/bills/${bill.id}/transactions`);
+            if (!txRes.ok) return null;
+
+            const transactions: CardTransaction[] = await txRes.json();
+            const nextInstallments = transactions
+              .map((tx) => ({
+                amount: tx.amount,
+                nextInstallment: incrementStrictInstallment(tx.installment),
+              }))
+              .filter((tx) => tx.nextInstallment !== null);
+
+            if (nextInstallments.length === 0) return null;
+
+            const nextAmount = nextInstallments.reduce((sum, tx) => sum + tx.amount, 0);
+
+            return {
+              name: bill.name,
+              amount: nextAmount,
+              month: nextMonth,
+              year: nextYear,
+              installment: null,
+              isPaid: false,
+              dueDay: bill.dueDay || null,
+              category: bill.category || null,
+              ownership: bill.ownership,
+              notes: bill.notes || null,
+              barCode: bill.barCode || null,
+              qrCode: bill.qrCode || null,
+              type: "CARD" as const,
+              cardLast4: bill.cardLast4 || null,
+              cardNickname: bill.cardNickname || null,
+            };
+          }
+
+          const nextInstallment = incrementInstallment(bill.installment);
+          if (bill.installment && !nextInstallment) return null;
+
+          return {
+            name: bill.name,
+            amount: bill.amount,
+            month: nextMonth,
+            year: nextYear,
+            installment: nextInstallment,
+            isPaid: false,
+            dueDay: bill.dueDay || null,
+            category: bill.category || null,
+            ownership: bill.ownership,
+            notes: bill.notes || null,
+            barCode: bill.barCode || null,
+            qrCode: bill.qrCode || null,
+            type: bill.type || "NORMAL",
+            cardLast4: bill.cardLast4 || null,
+            cardNickname: bill.cardNickname || null,
+          };
+        }),
+      );
+
+      const validNextBills = nextBills.filter((bill) => bill !== null);
+
+      const mergedByName = new Map<string, (typeof validNextBills)[number]>();
+      for (const payload of validNextBills) {
+        const key = payload.name.trim().toLowerCase();
+        const existing = mergedByName.get(key);
+        if (existing) {
+          mergedByName.set(key, { ...existing, amount: existing.amount + payload.amount });
+        } else {
+          mergedByName.set(key, payload);
+        }
+      }
+      const mergedNextBills = Array.from(mergedByName.values());
+
+      if (mergedNextBills.length === 0) {
+        showToast("Nenhuma conta elegível para migração.");
+        return;
+      }
+
+      const responses = await Promise.all(mergedNextBills.map(async (payload) => {
+        const key = payload.name.trim().toLowerCase();
+        const existing = existingByName.get(key);
+
+        if (existing) {
+          return fetch(`/api/bills/${existing.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount: payload.amount }),
+          });
+        }
+
+        return fetch("/api/bills", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }));
+
+      if (responses.some((res) => !res.ok)) {
+        throw new Error("Erro ao migrar contas");
+      }
+
+      showToast(
+        `${mergedNextBills.length} conta(s) migrada(s) para ${MONTHS[nextMonth - 1]}/${nextYear}.`,
+      );
+    } catch {
+      showToast("Não foi possível migrar as contas. Tente novamente.");
+    } finally {
+      setMigrating(false);
+    }
   }
 
   async function togglePaid(bill: Bill) {
@@ -259,17 +440,29 @@ export default function BillsManager() {
             <ChevronRight size={20} />
           </button>
         </div>
-        <button
-          onClick={() => {
-            setEditBill(null);
-            setShowForm(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all active:scale-95"
-          style={{ background: "#389671", color: "#fff" }}
-        >
-          <Plus size={16} />
-          <span className="hidden sm:inline">Nova conta</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={migrateBillsToNextMonth}
+            disabled={migrating || bills.length === 0}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{ background: "#1c2b22", color: "#8dcdb0", border: "1px solid #2a3d31" }}
+          >
+            <Copy size={15} />
+            <span className="hidden sm:inline">{migrating ? "Migrando..." : "Migrar mês"}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setEditBill(null);
+              setShowForm(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all active:scale-95"
+            style={{ background: "#389671", color: "#fff" }}
+          >
+            <Plus size={16} />
+            <span className="hidden sm:inline">Nova conta</span>
+          </button>
+        </div>
       </div>
 
       {/* v2: Ownership filter tabs */}
@@ -426,7 +619,7 @@ export default function BillsManager() {
           </button>
         </div>
       ) : (
-        <div className="card overflow-hidden">
+        <div className="card overflow-visible">
           <div className="divide-y" style={{ borderColor: "#2a3d31" }}>
             {filteredBills.map((bill) => {
               const dueSoon = isDueSoon(bill);

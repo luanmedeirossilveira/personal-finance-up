@@ -1,3 +1,4 @@
+// src/components/bills/BillsManager.tsx
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -16,6 +17,8 @@ import SalariesManager from "@/components/salaries/SalariesManager";
 import BillForm from "./BillForm";
 import BillsMobileActions from "./BillsMobileActions";
 import CardBillTransactions from "./CardBillTransactions";
+import CategoryBudgets from "./CategoryBudgets";
+import type { BillOwnership } from "@/lib/db/schema";
 
 export interface Bill {
   id: number;
@@ -27,6 +30,7 @@ export interface Bill {
   isPaid: boolean;
   dueDay?: number;
   category?: string;
+  ownership: BillOwnership;
   notes?: string;
   barCode?: string | null;
   qrCode?: string | null;
@@ -64,6 +68,33 @@ const MONTHS = [
 const BRL = (v: number) =>
   `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
+// v2: configuração visual de ownership
+const OWNERSHIP_CONFIG: Record<
+  BillOwnership | "all",
+  { label: string; emoji: string; color: string; activeBg: string }
+> = {
+  all: { label: "Todas", emoji: "📋", color: "#8dcdb0", activeBg: "#2a3d31" },
+  mine: { label: "Minhas", emoji: "🧑", color: "#93c5fd", activeBg: "#1d4ed8" },
+  joint: {
+    label: "Conjuntas",
+    emoji: "🤝",
+    color: "#86efac",
+    activeBg: "#389671",
+  },
+  hers: { label: "Dela", emoji: "👩", color: "#f9a8d4", activeBg: "#be185d" },
+};
+
+const OWNERSHIP_BADGE: Record<
+  BillOwnership,
+  { label: string; color: string; bg: string }
+> = {
+  mine: { label: "Minha", color: "#93c5fd", bg: "#1e2d3d" },
+  joint: { label: "Conjunta", color: "#86efac", bg: "#1c3025" },
+  hers: { label: "Dela", color: "#f9a8d4", bg: "#2d1f2a" },
+};
+
+type OwnershipFilter = BillOwnership | "all";
+
 export default function BillsManager() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -75,6 +106,8 @@ export default function BillsManager() {
   const [year, setYear] = useState(
     parseInt(searchParams.get("year") || String(now.getFullYear())),
   );
+  const [ownershipFilter, setOwnershipFilter] =
+    useState<OwnershipFilter>("all");
 
   const [bills, setBills] = useState<Bill[]>([]);
   const [salaries, setSalaries] = useState<Salary[]>([]);
@@ -171,12 +204,19 @@ export default function BillsManager() {
     fetchData();
   }
 
-  const totalBills = bills.reduce((s, b) => s + b.amount, 0);
-  const pendingBills = bills
+  // v2: Filtra contas pela aba ativa
+  const filteredBills =
+    ownershipFilter === "all"
+      ? bills
+      : bills.filter((b) => b.ownership === ownershipFilter);
+
+  const totalBills = filteredBills.reduce((s, b) => s + b.amount, 0);
+  const pendingBills = filteredBills
     .filter((b) => !b.isPaid)
     .reduce((s, b) => s + b.amount, 0);
   const totalIncome = salaries.reduce((s, sal) => s + sal.amount, 0);
-  const balance = totalIncome - totalBills;
+  // Saldo sempre usa total geral (não filtrado) para ser real
+  const balance = totalIncome - bills.reduce((s, b) => s + b.amount, 0);
 
   const today = now.getDate();
   const isDueSoon = (bill: Bill) =>
@@ -232,6 +272,42 @@ export default function BillsManager() {
         </button>
       </div>
 
+      {/* v2: Ownership filter tabs */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {(["all", "mine", "joint", "hers"] as OwnershipFilter[]).map((key) => {
+          const cfg = OWNERSHIP_CONFIG[key];
+          const isActive = ownershipFilter === key;
+          const count =
+            key === "all"
+              ? bills.length
+              : bills.filter((b) => b.ownership === key).length;
+          return (
+            <button
+              key={key}
+              onClick={() => setOwnershipFilter(key)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0"
+              style={{
+                background: isActive ? cfg.activeBg : "#1c2b22",
+                color: isActive ? "#fff" : cfg.color,
+                border: `1px solid ${isActive ? cfg.activeBg : "#2a3d31"}`,
+              }}
+            >
+              <span>{cfg.emoji}</span>
+              {cfg.label}
+              <span
+                className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                style={{
+                  background: isActive ? "rgba(255,255,255,0.2)" : "#2a3d31",
+                  color: isActive ? "#fff" : "#4a6b58",
+                }}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="card-elevated rounded-xl p-4">
@@ -239,7 +315,9 @@ export default function BillsManager() {
             className="text-xs mb-1 uppercase tracking-wide"
             style={{ color: "#4a6b58" }}
           >
-            Total
+            {ownershipFilter === "all"
+              ? "Total"
+              : `Total ${OWNERSHIP_CONFIG[ownershipFilter].label}`}
           </div>
           <div
             className="text-lg font-bold font-numeric"
@@ -281,7 +359,7 @@ export default function BillsManager() {
             className="text-xs mb-1 uppercase tracking-wide"
             style={{ color: "#4a6b58" }}
           >
-            Saldo
+            Saldo real
           </div>
           <div
             className="text-lg font-bold font-numeric"
@@ -291,6 +369,9 @@ export default function BillsManager() {
           </div>
         </div>
       </div>
+
+      {/* v2: Category budgets */}
+      <CategoryBudgets bills={bills} month={month} year={year} />
 
       {/* Salaries */}
       {salaries.length > 0 && (
@@ -325,11 +406,13 @@ export default function BillsManager() {
         <div className="card p-8 text-center" style={{ color: "#4a6b58" }}>
           Carregando...
         </div>
-      ) : bills.length === 0 ? (
+      ) : filteredBills.length === 0 ? (
         <div className="card p-8 text-center space-y-3">
           <div className="text-3xl">📋</div>
           <p style={{ color: "#4a6b58" }}>
-            Nenhuma conta em {MONTHS[month - 1]}
+            {ownershipFilter === "all"
+              ? `Nenhuma conta em ${MONTHS[month - 1]}`
+              : `Nenhuma conta "${OWNERSHIP_CONFIG[ownershipFilter].label}" em ${MONTHS[month - 1]}`}
           </p>
           <button
             onClick={() => {
@@ -345,17 +428,16 @@ export default function BillsManager() {
       ) : (
         <div className="card overflow-hidden">
           <div className="divide-y" style={{ borderColor: "#2a3d31" }}>
-            {bills.map((bill) => {
+            {filteredBills.map((bill) => {
               const dueSoon = isDueSoon(bill);
               const overdue = isOverdue(bill);
               const isCard = bill.type === "CARD";
               const isExpanded = expandedCardBills.includes(bill.id);
-              
+              const ownershipBadge = OWNERSHIP_BADGE[bill.ownership];
+
               return (
                 <div key={bill.id}>
-                  <div
-                    className="flex items-center gap-3 px-3 py-2 transition-colors hover:bg-white/[0.02]"
-                  >
+                  <div className="flex items-center gap-3 px-3 py-2 transition-colors hover:bg-white/[0.02]">
                     {/* Paid toggle */}
                     <button
                       onClick={() => togglePaid(bill)}
@@ -370,30 +452,25 @@ export default function BillsManager() {
                       )}
                     </button>
 
-                    {/* Card icon for card bills */}
-                    {isCard && (
-                      <div
-                        className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ background: "#1c2b22" }}
-                      >
-                        <CreditCard size={14} style={{ color: "#8dcdb0" }} />
-                      </div>
-                    )}
-
                     {/* Name & details */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span
                           className="text-sm font-medium truncate"
                           style={{
                             color: bill.isPaid ? "#4a6b58" : "#f0f9f4",
-                            textDecoration: bill.isPaid ? "line-through" : "none",
+                            textDecoration: bill.isPaid
+                              ? "line-through"
+                              : "none",
                           }}
                         >
                           {bill.name}
                         </span>
                         {isCard && bill.cardLast4 && (
-                          <span className="text-xs" style={{ color: "#4a6b58" }}>
+                          <span
+                            className="text-xs"
+                            style={{ color: "#4a6b58" }}
+                          >
                             •••• {bill.cardLast4}
                           </span>
                         )}
@@ -406,25 +483,49 @@ export default function BillsManager() {
                               : `Vence em ${bill.dueDay! - today}d`}
                           </span>
                         )}
+                        {/* v2: ownership badge — exibido apenas na aba "Todas" */}
+                        {ownershipFilter === "all" && (
+                          <span
+                            className="text-[10px] px-1.5 py-0.5 rounded-md font-semibold flex-shrink-0"
+                            style={{
+                              color: ownershipBadge.color,
+                              background: ownershipBadge.bg,
+                            }}
+                          >
+                            {ownershipBadge.label}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         {isCard && bill.cardNickname && (
-                          <span className="text-xs" style={{ color: "#5ab28d" }}>
+                          <span
+                            className="text-xs"
+                            style={{ color: "#5ab28d" }}
+                          >
                             {bill.cardNickname}
                           </span>
                         )}
                         {bill.installment && (
-                          <span className="text-xs" style={{ color: "#4a6b58" }}>
+                          <span
+                            className="text-xs"
+                            style={{ color: "#4a6b58" }}
+                          >
                             {bill.installment}
                           </span>
                         )}
                         {bill.dueDay && (
-                          <span className="text-xs" style={{ color: "#4a6b58" }}>
+                          <span
+                            className="text-xs flex items-center gap-1"
+                            style={{ color: "#4a6b58" }}
+                          >
                             dia {bill.dueDay}
                           </span>
                         )}
                         {!isCard && bill.category && (
-                          <span className="text-xs" style={{ color: "#4a6b58" }}>
+                          <span
+                            className="text-xs"
+                            style={{ color: "#4a6b58" }}
+                          >
                             {bill.category}
                           </span>
                         )}
@@ -439,20 +540,24 @@ export default function BillsManager() {
                       {BRL(bill.amount)}
                     </span>
 
-                    {/* Expand button for card bills */}
+                    {/* Expand for card bills */}
                     {isCard && (
                       <button
                         onClick={() => {
                           setExpandedCardBills((prev) =>
                             prev.includes(bill.id)
                               ? prev.filter((id) => id !== bill.id)
-                              : [...prev, bill.id]
+                              : [...prev, bill.id],
                           );
                         }}
                         className="p-1.5 rounded-lg transition-colors hover:bg-white/5"
                         style={{ color: "#8dcdb0" }}
                       >
-                        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        {isExpanded ? (
+                          <ChevronUp size={16} />
+                        ) : (
+                          <ChevronDown size={16} />
+                        )}
                       </button>
                     )}
 
@@ -472,14 +577,17 @@ export default function BillsManager() {
 
                   {/* Card transactions (expandable) */}
                   {isCard && isExpanded && (
-                    <div className="px-4 pb-3 ml-9" style={{ background: "#0f1a15" }}>
+                    <div
+                      className="px-4 pb-3 ml-9"
+                      style={{ background: "#0f1a15" }}
+                    >
                       <CardBillTransactions
                         billId={bill.id}
                         onTotalChange={(newTotal) => {
                           setBills((prev) =>
                             prev.map((b) =>
-                              b.id === bill.id ? { ...b, amount: newTotal } : b
-                            )
+                              b.id === bill.id ? { ...b, amount: newTotal } : b,
+                            ),
                           );
                         }}
                       />
@@ -499,8 +607,8 @@ export default function BillsManager() {
               className="text-sm font-semibold"
               style={{ color: "#8dcdb0" }}
             >
-              Total ({bills.filter((b) => b.isPaid).length}/{bills.length}{" "}
-              pagos)
+              Total ({filteredBills.filter((b) => b.isPaid).length}/
+              {filteredBills.length} pagos)
             </span>
             <span
               className="text-sm font-bold font-numeric"

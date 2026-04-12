@@ -1,0 +1,1 @@
+ALTER TABLE bills ADD COLUMN ownership TEXT NOT NULL DEFAULT 'joint';

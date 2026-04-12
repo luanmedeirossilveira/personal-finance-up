@@ -7,22 +7,35 @@ export async function GET(req: NextRequest) {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
-  const year = parseInt(req.nextUrl.searchParams.get("year") || new Date().getFullYear().toString());
+  const year = Number.parseInt(req.nextUrl.searchParams.get("year") || new Date().getFullYear().toString(), 10);
 
-  const bills = await db.query.bills.findMany({
-    where: and(
+  const bills = await db
+    .select({
+      month: schema.bills.month,
+      amount: schema.bills.amount,
+      isPaid: schema.bills.isPaid,
+    })
+    .from(schema.bills)
+    .where(and(
       eq(schema.bills.userId, user.id),
       eq(schema.bills.year, year)
-    ),
-  });
+    ));
 
-  const salaries = await db.query.salaries.findMany({
-    where: and(
+  const salaries = await db
+    .select({
+      month: schema.salaries.month,
+      amount: schema.salaries.amount,
+    })
+    .from(schema.salaries)
+    .where(and(
       eq(schema.salaries.userId, user.id),
       eq(schema.salaries.year, year)
-    ),
-  });
+    ));
 
+  /*
+   * Use explicit selects for dashboard aggregates so older DB instances
+   * that are missing newer columns in bills still work for this endpoint.
+   */
   // Aggregate by month
   const months = Array.from({ length: 12 }, (_, i) => {
     const month = i + 1;

@@ -10,11 +10,9 @@ export const users = sqliteTable("users", {
 
 export const authTokens = sqliteTable("auth_tokens", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   token: text("token").notNull().unique(),
-  type: text("type").notNull(), // 'email_verify' | 'session'
+  type: text("type").notNull(),
   expiresAt: text("expires_at").notNull(),
   usedAt: text("used_at"),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
@@ -22,47 +20,42 @@ export const authTokens = sqliteTable("auth_tokens", {
 
 export const bills = sqliteTable("bills", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  amount: real("amount").notNull(), // positive = expense
-  month: integer("month").notNull(), // 1-12
+  amount: real("amount").notNull(),
+  month: integer("month").notNull(),
   year: integer("year").notNull(),
-  installment: text("installment"), // '3/4', 'SEMPRE', 'VARIAVEL', 'ÚNICO'
+  installment: text("installment"),
   isPaid: integer("is_paid", { mode: "boolean" }).default(false),
-  dueDay: integer("due_day"), // day of month
-  category: text("category"), // 'moradia', 'transporte', 'saude', 'lazer', 'investimentos', 'cartão', 'outros'
+  dueDay: integer("due_day"),
+  category: text("category"),
+  ownership: text("ownership", { enum: ["mine", "hers", "joint"] }).default("joint").notNull(),
   notes: text("notes"),
   barCode: text("bar_code"),
   qrCode: text("qr_code"),
   attachments: text("attachments"),
-  type: text("type").default("NORMAL"), // 'NORMAL' | 'CARD'
-  cardLast4: text("card_last4"), // últimos 4 dígitos (quando type='CARD')
-  cardNickname: text("card_nickname"), // apelido do cartão (ex: "Nubank Luan")
+  type: text("type").default("NORMAL"),
+  cardLast4: text("card_last4"),
+  cardNickname: text("card_nickname"),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").default(sql`(datetime('now'))`),
 });
 
 export const cardTransactions = sqliteTable("card_transactions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  billId: integer("bill_id")
-    .notNull()
-    .references(() => bills.id, { onDelete: "cascade" }),
+  billId: integer("bill_id").notNull().references(() => bills.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   amount: real("amount").notNull(),
-  installment: text("installment"), // '3/12', etc
+  installment: text("installment"),
   category: text("category"),
-  date: text("date"), // data da transação (opcional)
+  date: text("date"),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
 });
 
 export const salaries = sqliteTable("salaries", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  person: text("person").notNull(), // 'Luan', 'Franciele'
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  person: text("person").notNull(),
   amount: real("amount").notNull(),
   month: integer("month").notNull(),
   year: integer("year").notNull(),
@@ -71,12 +64,10 @@ export const salaries = sqliteTable("salaries", {
 
 export const futureBills = sqliteTable("future_bills", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   amount: real("amount"),
-  reminderDate: text("reminder_date"), // ISO date string for when to remind
+  reminderDate: text("reminder_date"),
   notifyDaysBefore: integer("notify_days_before").default(3),
   notified: integer("notified", { mode: "boolean" }).default(false),
   notes: text("notes"),
@@ -89,8 +80,8 @@ export const debts = sqliteTable("debts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  amount: real("amount").notNull().default(0),      // valor atual da dívida
-  paidAmount: real("paid_amount").notNull().default(0), // soma histórica de pagamentos
+  amount: real("amount").notNull().default(0),
+  paidAmount: real("paid_amount").notNull().default(0),
   isPaid: integer("is_paid", { mode: "boolean" }).default(false),
   notes: text("notes"),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
@@ -116,37 +107,60 @@ export const debtBillLinks = sqliteTable("debt_bill_links", {
   createdAt: text("created_at").default(sql`(datetime('now'))`),
 });
 
+// v2: Comportamentos — Limites por categoria
+export const categoryBudgets = sqliteTable("category_budgets", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  category: text("category").notNull(),
+  amount: real("amount").notNull().default(0),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").default(sql`(datetime('now'))`),
+});
+
+// v2: Comportamentos — Alertas de risco
+export const riskAlerts = sqliteTable("risk_alerts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),      // 'installments_growth' | 'fixed_growth' | 'card_recurrence'
+  severity: text("severity").notNull(), // 'warning' | 'danger'
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  dismissedAt: text("dismissed_at"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
+// v2: Comportamentos — Check-in semanal e fechamento mensal
+export const weeklyCheckins = sqliteTable("weekly_checkins", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  weekNumber: integer("week_number").notNull(), // semana ISO (1–53)
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  type: text("type").notNull().default("weekly"), // 'weekly' | 'monthly'
+  // JSON: { answers:[{question,answer}], decision?, highlight?, improvement? }
+  data: text("data").notNull().default("{}"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
+// Relations
 export const historyDebtsRelations = relations(historyDebts, ({ one, many }) => ({
-  user: one(users, {
-    fields: [historyDebts.userId],
-    references: [users.id],
-  }),
-  debt: one(debts, {
-    fields: [historyDebts.debtId],
-    references: [debts.id],
-  }),
+  user: one(users, { fields: [historyDebts.userId], references: [users.id] }),
+  debt: one(debts, { fields: [historyDebts.debtId], references: [debts.id] }),
   billLinks: many(debtBillLinks),
 }));
 
 export const debtBillLinksRelations = relations(debtBillLinks, ({ one }) => ({
-  user: one(users, {
-    fields: [debtBillLinks.userId],
-    references: [users.id],
-  }),
-  debt: one(debts, {
-    fields: [debtBillLinks.debtId],
-    references: [debts.id],
-  }),
-  bill: one(bills, {
-    fields: [debtBillLinks.billId],
-    references: [bills.id],
-  }),
-  historyDebt: one(historyDebts, {
-    fields: [debtBillLinks.historyDebtId],
-    references: [historyDebts.id],
-  }),
+  user: one(users, { fields: [debtBillLinks.userId], references: [users.id] }),
+  debt: one(debts, { fields: [debtBillLinks.debtId], references: [debts.id] }),
+  bill: one(bills, { fields: [debtBillLinks.billId], references: [bills.id] }),
+  historyDebt: one(historyDebts, { fields: [debtBillLinks.historyDebtId], references: [historyDebts.id] }),
 }));
 
+// Types
 export type User = typeof users.$inferSelect;
 export type AuthToken = typeof authTokens.$inferSelect;
 export type Bill = typeof bills.$inferSelect;
@@ -163,3 +177,20 @@ export type HistoryDebt = typeof historyDebts.$inferSelect;
 export type NewHistoryDebt = typeof historyDebts.$inferInsert;
 export type DebtBillLink = typeof debtBillLinks.$inferSelect;
 export type NewDebtBillLink = typeof debtBillLinks.$inferInsert;
+export type CategoryBudget = typeof categoryBudgets.$inferSelect;
+export type NewCategoryBudget = typeof categoryBudgets.$inferInsert;
+export type RiskAlert = typeof riskAlerts.$inferSelect;
+export type NewRiskAlert = typeof riskAlerts.$inferInsert;
+export type WeeklyCheckin = typeof weeklyCheckins.$inferSelect;
+export type NewWeeklyCheckin = typeof weeklyCheckins.$inferInsert;
+// v2 helpers
+export type BillOwnership = "mine" | "hers" | "joint";
+export type RiskAlertType = "installments_growth" | "fixed_growth" | "card_recurrence";
+export type RiskSeverity = "warning" | "danger";
+export type CheckinType = "weekly" | "monthly";
+
+export const BILL_CATEGORIES = [
+  "moradia", "transporte", "saude", "lazer",
+  "investimentos", "alimentação", "cartão", "assinaturas", "vestuário", "beleza", "dívidas", "outros",
+] as const;
+export type BillCategory = (typeof BILL_CATEGORIES)[number];

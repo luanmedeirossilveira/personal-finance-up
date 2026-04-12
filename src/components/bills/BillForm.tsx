@@ -1,6 +1,8 @@
+// src/components/bills/BillForm.tsx
 import { useState } from "react";
 import { Bill } from "./BillsManager";
 import { Check, CreditCard, Receipt } from "lucide-react";
+import type { BillOwnership } from "@/lib/db/schema";
 
 const CATEGORIES = [
   "moradia",
@@ -9,7 +11,45 @@ const CATEGORIES = [
   "lazer",
   "investimentos",
   "alimentação",
+  "vestuário",
+  "beleza",
+  "dívidas",
   "outros",
+];
+
+// v2: rótulos e cores de ownership
+const OWNERSHIP_OPTIONS: {
+  value: BillOwnership;
+  label: string;
+  emoji: string;
+  color: string;
+  bg: string;
+  activeBg: string;
+}[] = [
+  {
+    value: "mine",
+    label: "Minha",
+    emoji: "🧑",
+    color: "#93c5fd",
+    bg: "#1e2d3d",
+    activeBg: "#1d4ed8",
+  },
+  {
+    value: "joint",
+    label: "Conjunta",
+    emoji: "🤝",
+    color: "#86efac",
+    bg: "#1c2b22",
+    activeBg: "#389671",
+  },
+  {
+    value: "hers",
+    label: "Dela",
+    emoji: "👩",
+    color: "#f9a8d4",
+    bg: "#2d1f2a",
+    activeBg: "#be185d",
+  },
 ];
 
 export default function BillForm({
@@ -25,13 +65,18 @@ export default function BillForm({
   onClose: () => void;
   onSave: () => void;
 }>) {
-  const [type, setType] = useState<"NORMAL" | "CARD">(bill?.type === "CARD" ? "CARD" : "NORMAL");
+  const [type, setType] = useState<"NORMAL" | "CARD">(
+    bill?.type === "CARD" ? "CARD" : "NORMAL",
+  );
   const [name, setName] = useState(bill?.name || "");
   const [amount, setAmount] = useState(bill?.amount?.toString() || "");
   const [installment, setInstallment] = useState(bill?.installment || "");
   const [isPaid, setIsPaid] = useState(bill?.isPaid || false);
   const [dueDay, setDueDay] = useState(bill?.dueDay?.toString() || "");
   const [category, setCategory] = useState(bill?.category || "");
+  const [ownership, setOwnership] = useState<BillOwnership>(
+    (bill?.ownership as BillOwnership) || "joint",
+  );
   const [notes, setNotes] = useState(bill?.notes || "");
   const [barCode, setBarCode] = useState(bill?.barCode || "");
   const [qrCode, setQrCode] = useState(bill?.qrCode || "");
@@ -51,10 +96,11 @@ export default function BillForm({
       installment: installment || null,
       isPaid,
       dueDay: dueDay ? parseInt(dueDay) : null,
-      category: type === "CARD" ? "cartão" : (category || null),
+      category: type === "CARD" ? "cartão" : category || null,
+      ownership,
       notes: notes || null,
-      barCode: type === "CARD" ? null : (barCode || null),
-      qrCode: type === "CARD" ? null : (qrCode || null),
+      barCode: type === "CARD" ? null : barCode || null,
+      qrCode: type === "CARD" ? null : qrCode || null,
       type,
       cardLast4: type === "CARD" ? cardLast4 : null,
       cardNickname: type === "CARD" ? cardNickname : null,
@@ -132,6 +178,39 @@ export default function BillForm({
             </button>
           </div>
 
+          {/* Ownership selector — v2: Governança do casal */}
+          <div>
+            <label
+              className="block text-xs font-medium mb-2 uppercase tracking-wide"
+              style={{ color: "#8dcdb0" }}
+            >
+              De quem é essa conta?
+            </label>
+            <div className="flex gap-2">
+              {OWNERSHIP_OPTIONS.map((opt) => {
+                const isActive = ownership === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setOwnership(opt.value)}
+                    className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                      isActive ? "ring-2 ring-white/20" : ""
+                    }`}
+                    style={{
+                      background: isActive ? opt.activeBg : opt.bg,
+                      color: isActive ? "#fff" : opt.color,
+                      border: `1px solid ${isActive ? opt.activeBg : "#2a3d31"}`,
+                    }}
+                  >
+                    <span className="text-base leading-none">{opt.emoji}</span>
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             {/* Card-specific fields */}
             {type === "CARD" && (
@@ -145,7 +224,11 @@ export default function BillForm({
                   </label>
                   <input
                     value={cardLast4}
-                    onChange={(e) => setCardLast4(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    onChange={(e) =>
+                      setCardLast4(
+                        e.target.value.replace(/\D/g, "").slice(0, 4),
+                      )
+                    }
                     className="input-base"
                     placeholder="1234"
                     maxLength={4}
@@ -179,7 +262,9 @@ export default function BillForm({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="input-base"
-                placeholder={type === "CARD" ? "FATURA NUBANK ABR/2026" : "ALUGUEL"}
+                placeholder={
+                  type === "CARD" ? "FATURA NUBANK ABR/2026" : "ALUGUEL"
+                }
                 required
               />
             </div>

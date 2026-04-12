@@ -17,6 +17,7 @@ import SalariesManager from "@/components/salaries/SalariesManager";
 import BillForm from "./BillForm";
 import BillsMobileActions from "./BillsMobileActions";
 import CardBillTransactions from "./CardBillTransactions";
+import CategoryBudgets from "./CategoryBudgets";
 import type { BillOwnership } from "@/lib/db/schema";
 
 export interface Bill {
@@ -368,6 +369,9 @@ export default function BillsManager() {
           </div>
         </div>
       </div>
+
+      {/* v2: Category budgets */}
+      <CategoryBudgets bills={bills} month={month} year={year} />
 
       {/* Salaries */}
       {salaries.length > 0 && (

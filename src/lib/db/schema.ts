@@ -33,6 +33,10 @@ export const bills = sqliteTable("bills", {
   isPaid: integer("is_paid", { mode: "boolean" }).default(false),
   dueDay: integer("due_day"), // day of month
   category: text("category"), // 'moradia', 'transporte', 'saude', 'lazer', 'investimentos', 'cartão', 'outros'
+  // v2: Método 3C — Governança do casal
+  ownership: text("ownership", { enum: ["mine", "hers", "joint"] })
+    .default("joint")
+    .notNull(), // 'mine' = Luan | 'hers' = Franciele | 'joint' = Conjunta
   notes: text("notes"),
   barCode: text("bar_code"),
   qrCode: text("qr_code"),
@@ -89,8 +93,8 @@ export const debts = sqliteTable("debts", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  amount: real("amount").notNull().default(0),      // valor atual da dívida
-  paidAmount: real("paid_amount").notNull().default(0), // soma histórica de pagamentos
+  amount: real("amount").notNull().default(0),
+  paidAmount: real("paid_amount").notNull().default(0),
   isPaid: integer("is_paid", { mode: "boolean" }).default(false),
   notes: text("notes"),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
@@ -163,3 +167,6 @@ export type HistoryDebt = typeof historyDebts.$inferSelect;
 export type NewHistoryDebt = typeof historyDebts.$inferInsert;
 export type DebtBillLink = typeof debtBillLinks.$inferSelect;
 export type NewDebtBillLink = typeof debtBillLinks.$inferInsert;
+
+// v2 helpers
+export type BillOwnership = "mine" | "hers" | "joint";

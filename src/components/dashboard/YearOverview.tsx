@@ -44,8 +44,14 @@ export default function YearOverview() {
   useEffect(() => {
     setLoading(true);
     fetch(`/api/dashboard?year=${year}`)
-      .then((r) => r.json())
-      .then((d) => { setData(d.months); setLoading(false); });
+      .then(async (r) => {
+        if (!r.ok) throw new Error("Network response was not ok");
+        const text = await r.text();
+        if (!text) return { months: [] };
+        return JSON.parse(text);
+      })
+      .then((d) => { setData(d.months); setLoading(false); })
+      .catch(() => { setData([]); setLoading(false); });
   }, [year]);
 
   useEffect(() => {

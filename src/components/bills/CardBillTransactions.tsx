@@ -80,7 +80,7 @@ export default function CardBillTransactions({
   return (
     <div className="mt-2 space-y-2">
       {/* Header with add button */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between py-2">
         <span className="text-xs font-medium uppercase tracking-wide" style={{ color: "#4a6b58" }}>
           Transações ({transactions.length})
         </span>

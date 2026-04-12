@@ -452,16 +452,6 @@ export default function BillsManager() {
                       )}
                     </button>
 
-                    {/* Card icon */}
-                    {isCard && (
-                      <div
-                        className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ background: "#1c2b22" }}
-                      >
-                        <CreditCard size={14} style={{ color: "#8dcdb0" }} />
-                      </div>
-                    )}
-
                     {/* Name & details */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -525,7 +515,7 @@ export default function BillsManager() {
                         )}
                         {bill.dueDay && (
                           <span
-                            className="text-xs"
+                            className="text-xs flex items-center gap-1"
                             style={{ color: "#4a6b58" }}
                           >
                             dia {bill.dueDay}

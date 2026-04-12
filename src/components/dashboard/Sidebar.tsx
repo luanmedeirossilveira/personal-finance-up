@@ -1,3 +1,4 @@
+// src/components/dashboard/Sidebar.tsx
 "use client";
 
 import { useState } from "react";
@@ -11,6 +12,7 @@ import {
   X,
   TrendingUp,
   TrendingDown,
+  RefreshCcw,
 } from "lucide-react";
 
 const navItems = [
@@ -18,6 +20,7 @@ const navItems = [
   { href: "/contas", label: "Contas", icon: Receipt },
   { href: "/future", label: "Futuras", icon: TrendingUp },
   { href: "/debts", label: "Dívidas", icon: TrendingDown },
+  { href: "/checkin", label: "Revisão", icon: RefreshCcw }, // v2
 ];
 
 export default function Sidebar() {
@@ -35,7 +38,10 @@ export default function Sidebar() {
     <>
       {/* Logo */}
       <div className="px-6 py-6 mb-4">
-        <h1 className="text-xl font-black tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
+        <h1
+          className="text-xl font-black tracking-tight"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
           <span style={{ color: "#5ab28d" }}>Contas</span>
           <span style={{ color: "#8dcdb0", fontWeight: 300 }}> Cotidiano</span>
         </h1>
@@ -55,7 +61,9 @@ export default function Sidebar() {
               style={{
                 background: active ? "rgba(56,150,113,0.15)" : "transparent",
                 color: active ? "#5ab28d" : "#4a6b58",
-                border: active ? "1px solid rgba(56,150,113,0.25)" : "1px solid transparent",
+                border: active
+                  ? "1px solid rgba(56,150,113,0.25)"
+                  : "1px solid transparent",
               }}
             >
               <Icon size={18} />
@@ -94,7 +102,10 @@ export default function Sidebar() {
         className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-4"
         style={{ background: "#162019", borderBottom: "1px solid #2a3d31" }}
       >
-        <h1 className="text-lg font-black" style={{ fontFamily: "var(--font-display)" }}>
+        <h1
+          className="text-lg font-black"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
           <span style={{ color: "#5ab28d" }}>Contas</span>
           <span style={{ color: "#8dcdb0", fontWeight: 300 }}> Cotidiano</span>
         </h1>
@@ -119,7 +130,10 @@ export default function Sidebar() {
             style={{ background: "#162019", borderRight: "1px solid #2a3d31" }}
           >
             <div className="flex justify-end p-4">
-              <button onClick={() => setMobileOpen(false)} style={{ color: "#4a6b58" }}>
+              <button
+                onClick={() => setMobileOpen(false)}
+                style={{ color: "#4a6b58" }}
+              >
                 <X size={24} />
               </button>
             </div>

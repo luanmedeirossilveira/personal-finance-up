@@ -10,11 +10,9 @@ export const users = sqliteTable("users", {
 
 export const authTokens = sqliteTable("auth_tokens", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   token: text("token").notNull().unique(),
-  type: text("type").notNull(), // 'email_verify' | 'session'
+  type: text("type").notNull(),
   expiresAt: text("expires_at").notNull(),
   usedAt: text("used_at"),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
@@ -22,9 +20,7 @@ export const authTokens = sqliteTable("auth_tokens", {
 
 export const bills = sqliteTable("bills", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   amount: real("amount").notNull(),
   month: integer("month").notNull(),
@@ -33,9 +29,7 @@ export const bills = sqliteTable("bills", {
   isPaid: integer("is_paid", { mode: "boolean" }).default(false),
   dueDay: integer("due_day"),
   category: text("category"),
-  ownership: text("ownership", { enum: ["mine", "hers", "joint"] })
-    .default("joint")
-    .notNull(),
+  ownership: text("ownership", { enum: ["mine", "hers", "joint"] }).default("joint").notNull(),
   notes: text("notes"),
   barCode: text("bar_code"),
   qrCode: text("qr_code"),
@@ -49,9 +43,7 @@ export const bills = sqliteTable("bills", {
 
 export const cardTransactions = sqliteTable("card_transactions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  billId: integer("bill_id")
-    .notNull()
-    .references(() => bills.id, { onDelete: "cascade" }),
+  billId: integer("bill_id").notNull().references(() => bills.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   amount: real("amount").notNull(),
   installment: text("installment"),
@@ -62,9 +54,7 @@ export const cardTransactions = sqliteTable("card_transactions", {
 
 export const salaries = sqliteTable("salaries", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   person: text("person").notNull(),
   amount: real("amount").notNull(),
   month: integer("month").notNull(),
@@ -74,9 +64,7 @@ export const salaries = sqliteTable("salaries", {
 
 export const futureBills = sqliteTable("future_bills", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   amount: real("amount"),
   reminderDate: text("reminder_date"),
@@ -119,18 +107,43 @@ export const debtBillLinks = sqliteTable("debt_bill_links", {
   createdAt: text("created_at").default(sql`(datetime('now'))`),
 });
 
-// v2: Método 3C — Comportamentos — Limites por categoria
+// v2: Comportamentos — Limites por categoria
 export const categoryBudgets = sqliteTable("category_budgets", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   category: text("category").notNull(),
   amount: real("amount").notNull().default(0),
   month: integer("month").notNull(),
   year: integer("year").notNull(),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").default(sql`(datetime('now'))`),
+});
+
+// v2: Comportamentos — Alertas de risco
+export const riskAlerts = sqliteTable("risk_alerts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),      // 'installments_growth' | 'fixed_growth' | 'card_recurrence'
+  severity: text("severity").notNull(), // 'warning' | 'danger'
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  dismissedAt: text("dismissed_at"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
+// v2: Comportamentos — Check-in semanal e fechamento mensal
+export const weeklyCheckins = sqliteTable("weekly_checkins", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  weekNumber: integer("week_number").notNull(), // semana ISO (1–53)
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  type: text("type").notNull().default("weekly"), // 'weekly' | 'monthly'
+  // JSON: { answers:[{question,answer}], decision?, highlight?, improvement? }
+  data: text("data").notNull().default("{}"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
 });
 
 // Relations
@@ -166,21 +179,18 @@ export type DebtBillLink = typeof debtBillLinks.$inferSelect;
 export type NewDebtBillLink = typeof debtBillLinks.$inferInsert;
 export type CategoryBudget = typeof categoryBudgets.$inferSelect;
 export type NewCategoryBudget = typeof categoryBudgets.$inferInsert;
-
+export type RiskAlert = typeof riskAlerts.$inferSelect;
+export type NewRiskAlert = typeof riskAlerts.$inferInsert;
+export type WeeklyCheckin = typeof weeklyCheckins.$inferSelect;
+export type NewWeeklyCheckin = typeof weeklyCheckins.$inferInsert;
 // v2 helpers
 export type BillOwnership = "mine" | "hers" | "joint";
+export type RiskAlertType = "installments_growth" | "fixed_growth" | "card_recurrence";
+export type RiskSeverity = "warning" | "danger";
+export type CheckinType = "weekly" | "monthly";
+
 export const BILL_CATEGORIES = [
-  "moradia",
-  "transporte",
-  "saude",
-  "lazer",
-  "investimentos",
-  "alimentação",
-  "cartão",
-  "assinaturas",
-  "vestuário",
-  "beleza",
-  "dívidas",
-  "outros",
+  "moradia", "transporte", "saude", "lazer",
+  "investimentos", "alimentação", "cartão", "assinaturas", "vestuário", "beleza", "dívidas", "outros",
 ] as const;
 export type BillCategory = (typeof BILL_CATEGORIES)[number];

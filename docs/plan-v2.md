@@ -154,28 +154,26 @@ O Método 3C funciona melhor quando o usuário **sente que está evoluindo**, n�
 
 ## Ordem de implementação sugerida
 
-```
-Fase 1 (Comportamentos)
-  └── A. Classificação pessoal/conjunta nas Contas
-  └── B. Limites por categoria + barra de progresso
-  └── C. Alertas de comportamento de risco
-  └── D. Check-in semanal (tela Revisão v1)
-  └── E. Multi-email no cron Resend
+- Fase 1 Completa (Comportamentos)
+  - A. Classificação pessoal/conjunta nas Contas
+  - B. Limites por categoria + barra de progresso
+  - C. Alertas de comportamento de risco
+  - D. Check-in semanal (tela Revisão v1)
+  - E. Multi-email no cron Resend
 
-Fase 2 (Conhecimentos + Governança)
-  └── A. Cards explicativos no Dashboard
-  └── B. Feed "Aprendizados do mês"
-  └── C. Visão individual vs conjunta
-  └── D. Registro de decisões do casal
-  └── E. Fechamento mensal guiado
+- Fase 2 (Conhecimentos + Governança)
+  - A. Cards explicativos no Dashboard
+  - B. Feed "Aprendizados do mês"
+  - C. Visão individual vs conjunta
+  - D. Registro de decisões do casal
+  - E. Fechamento mensal guiado
 
-Fase 3 (Conceitos + Novas telas)
-  └── A. Tela Metas
-  └── B. Tela Investimentos
-  └── C. Simuladores (parcelamento, juros compostos)
-  └── D. Patrimônio líquido + cenários
-  └── E. Tela Insights completa
-```
+- Fase 3 (Conceitos + Novas telas)
+  - A. Tela Metas
+  - B. Tela Investimentos
+  - C. Simuladores (parcelamento, juros compostos)
+  - D. Patrimônio líquido + cenários
+  - E. Tela Insights completa
 
 ---
 

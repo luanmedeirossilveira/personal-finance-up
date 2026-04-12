@@ -2,30 +2,28 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Settings2, AlertTriangle, TrendingUp } from "lucide-react";
+import { Settings2, AlertTriangle, TrendingUp, ChevronDown } from "lucide-react";
 import { BILL_CATEGORIES, type BillCategory } from "@/lib/db/schema";
 import type { Bill } from "./BillsManager";
 
-// ─── Configuração visual por categoria ───────────────────────────────────────
 const CATEGORY_CONFIG: Record<
   BillCategory,
-  { label: string; emoji: string; color: string; bg: string }
+  { label: string; emoji: string }
 > = {
-  moradia:      { label: "Moradia",      emoji: "🏠", color: "#93c5fd", bg: "#1e2d3d" },
-  transporte:   { label: "Transporte",   emoji: "🚗", color: "#fcd34d", bg: "#2d2510" },
-  saude:        { label: "Saúde",        emoji: "❤️", color: "#f87171", bg: "#2d1515" },
-  lazer:        { label: "Lazer",        emoji: "🎉", color: "#c084fc", bg: "#251a2d" },
-  investimentos:{ label: "Investimentos",emoji: "📈", color: "#34d399", bg: "#0d2a1e" },
-  alimentação:  { label: "Alimentação",  emoji: "🍽️", color: "#fb923c", bg: "#2d1a0d" },
-  cartão:       { label: "Cartão",       emoji: "💳", color: "#8dcdb0", bg: "#1c2b22" },
-  assinaturas:  { label: "Assinaturas",  emoji: "📺", color: "#fbbf24", bg: "#2d220d" },
-  vestuário:    { label: "Vestuário",    emoji: "👗", color: "#f472b6", bg: "#2d0d1a" },
-  beleza:       { label: "Beleza",       emoji: "💄", color: "#f9a8d4", bg: "#2d0d1a" },
-  dívidas:       { label: "Dívidas",      emoji: "💸", color: "#ef4444", bg: "#2d0d0d" },
-  outros:       { label: "Outros",       emoji: "📦", color: "#94a3b8", bg: "#1e222a" },
+  moradia:      { label: "Moradia",      emoji: "🏠" },
+  transporte:   { label: "Transporte",   emoji: "🚗" },
+  saude:        { label: "Saúde",        emoji: "❤️" },
+  lazer:        { label: "Lazer",        emoji: "🎉" },
+  investimentos:{ label: "Investimentos",emoji: "📈" },
+  alimentação:  { label: "Alimentação",  emoji: "🍽️" },
+  cartão:       { label: "Cartão",       emoji: "💳" },
+  assinaturas:  { label: "Assinaturas",  emoji: "📺" },
+  vestuário:    { label: "Vestuário",    emoji: "👗" },
+  beleza:       { label: "Beleza",       emoji: "💄" },
+  dívidas:      { label: "Dívidas",      emoji: "💸" },
+  outros:       { label: "Outros",       emoji: "📦" },
 };
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
 interface CategoryBudget {
   id: number;
   category: string;
@@ -49,9 +47,9 @@ interface Props {
 const BRL = (v: number) =>
   `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
-// ─── Componente principal ─────────────────────────────────────────────────────
-export default function CategoryBudgets({ bills, month, year }: Props) {
+export default function CategoryBudgets({ bills, month, year }: Readonly<Props>) {
   const [budgets, setBudgets] = useState<CategoryBudget[]>([]);
+  const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -82,7 +80,7 @@ export default function CategoryBudgets({ bills, month, year }: Props) {
     const budget = budgetEntry?.amount ?? null;
     const percent = budget ? Math.min((spent / budget) * 100, 100) : 0;
     const status: CategorySummary["status"] =
-      !budget
+      budget === null
         ? "ok"
         : spent > budget
         ? "over"
@@ -100,6 +98,7 @@ export default function CategoryBudgets({ bills, month, year }: Props) {
       initial[cat] = b ? b.amount.toString() : "";
     });
     setEditValues(initial);
+    setExpanded(true);
     setEditing(true);
   }
 
@@ -108,8 +107,8 @@ export default function CategoryBudgets({ bills, month, year }: Props) {
     const promises = BILL_CATEGORIES.map(async (cat) => {
       const raw = editValues[cat]?.replace(",", ".").trim();
       if (!raw) return; // sem valor = sem limite
-      const amount = parseFloat(raw);
-      if (isNaN(amount) || amount <= 0) return;
+      const amount = Number.parseFloat(raw);
+      if (Number.isNaN(amount) || amount <= 0) return;
       await fetch("/api/category-budgets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -123,20 +122,30 @@ export default function CategoryBudgets({ bills, month, year }: Props) {
   }
 
   // ─── Render ─────────────────────────────────────────────────────────────────
-  if (summaries.length === 0 && !editing) return null;
-
   return (
     <div className="card p-4 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="flex items-center gap-2 text-left"
+          aria-expanded={expanded}
+        >
           <h3
             className="text-sm font-black uppercase tracking-wide"
-            style={{ fontFamily: "var(--font-display)", color: "#8dcdb0" }}
+            style={{ fontFamily: "var(--font-display)", color: "#d6e4dd" }}
           >
             Limites por categoria
           </h3>
-          <p className="text-xs mt-0.5" style={{ color: "#4a6b58" }}>
+          <ChevronDown
+            size={14}
+            className={`transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+            color="#9db3a8"
+          />
+        </button>
+        <div>
+          <p className="text-xs mt-0.5 text-right" style={{ color: "#7b9488" }}>
             Acompanhe seus gastos por área
           </p>
         </div>
@@ -145,9 +154,9 @@ export default function CategoryBudgets({ bills, month, year }: Props) {
           disabled={saving}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
           style={{
-            background: editing ? "#389671" : "#1c2b22",
-            color: editing ? "#fff" : "#8dcdb0",
-            border: "1px solid #2a3d31",
+            background: editing ? "#4f5f56" : "#1f2522",
+            color: "#d6e4dd",
+            border: "1px solid #313a36",
           }}
         >
           <Settings2 size={13} />
@@ -155,6 +164,8 @@ export default function CategoryBudgets({ bills, month, year }: Props) {
         </button>
       </div>
 
+      {expanded && (
+        <>
       {/* Edit mode: grid de inputs */}
       {editing && (
         <div className="grid grid-cols-2 gap-2 pt-1">
@@ -164,7 +175,7 @@ export default function CategoryBudgets({ bills, month, year }: Props) {
               <div key={cat}>
                 <label
                   className="block text-[10px] font-semibold mb-1 uppercase tracking-wide"
-                  style={{ color: cfg.color }}
+                  style={{ color: "#a8bbb1" }}
                 >
                   {cfg.emoji} {cfg.label}
                 </label>
@@ -184,7 +195,7 @@ export default function CategoryBudgets({ bills, month, year }: Props) {
             <button
               onClick={() => setEditing(false)}
               className="text-xs px-3 py-1.5 rounded-lg"
-              style={{ color: "#4a6b58", background: "#1c2b22", border: "1px solid #2a3d31" }}
+              style={{ color: "#a8bbb1", background: "#1f2522", border: "1px solid #313a36" }}
             >
               Cancelar
             </button>
@@ -202,7 +213,7 @@ export default function CategoryBudgets({ bills, month, year }: Props) {
                 ? "#ef4444"
                 : status === "warning"
                 ? "#f59e0b"
-                : cfg.color;
+                : "#5b7468";
 
             return (
               <div key={category} className="space-y-1.5">
@@ -212,7 +223,7 @@ export default function CategoryBudgets({ bills, month, year }: Props) {
                     <span className="text-sm">{cfg.emoji}</span>
                     <span
                       className="text-xs font-semibold"
-                      style={{ color: cfg.color }}
+                      style={{ color: "#d6e4dd" }}
                     >
                       {cfg.label}
                     </span>
@@ -226,7 +237,14 @@ export default function CategoryBudgets({ bills, month, year }: Props) {
                   <div className="text-right">
                     <span
                       className="text-xs font-bold font-numeric"
-                      style={{ color: status === "over" ? "#ef4444" : "#f0f9f4" }}
+                      style={{
+                        color:
+                          status === "over"
+                            ? "#ef4444"
+                            : status === "warning"
+                            ? "#f59e0b"
+                            : "#f0f9f4",
+                      }}
                     >
                       {BRL(spent)}
                     </span>
@@ -239,7 +257,13 @@ export default function CategoryBudgets({ bills, month, year }: Props) {
                 </div>
 
                 {/* Progress bar */}
-                {budget !== null ? (
+                {budget === null ? (
+                  // Sem limite definido: barra cinza com traço
+                  <div
+                    className="h-1.5 rounded-full"
+                    style={{ background: "#2a3d31", opacity: 0.4 }}
+                  />
+                ) : (
                   <div
                     className="h-1.5 rounded-full overflow-hidden"
                     style={{ background: "#2a3d31" }}
@@ -253,12 +277,6 @@ export default function CategoryBudgets({ bills, month, year }: Props) {
                       }}
                     />
                   </div>
-                ) : (
-                  // Sem limite definido: barra cinza com traço
-                  <div
-                    className="h-1.5 rounded-full"
-                    style={{ background: "#2a3d31", opacity: 0.4 }}
-                  />
                 )}
 
                 {/* Status message */}
@@ -283,6 +301,8 @@ export default function CategoryBudgets({ bills, month, year }: Props) {
         <p className="text-xs text-center py-2" style={{ color: "#4a6b58" }}>
           Adicione contas com categoria para ver os limites.
         </p>
+      )}
+        </>
       )}
     </div>
   );

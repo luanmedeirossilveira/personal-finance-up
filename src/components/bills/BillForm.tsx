@@ -11,6 +11,9 @@ const CATEGORIES = [
   "lazer",
   "investimentos",
   "alimentação",
+  "vestuário",
+  "beleza",
+  "dívidas",
   "outros",
 ];
 

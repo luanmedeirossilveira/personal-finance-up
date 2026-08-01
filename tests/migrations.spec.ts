@@ -6,4 +6,15 @@ describe('migrations', () => {
     const sql = readFileSync('./drizzle/0001_add_future_bills.sql', 'utf8');
     expect(sql).toContain('CREATE TABLE IF NOT EXISTS future_bills');
   });
+
+  it('contains meal_cards migration', () => {
+    const sql = readFileSync('./drizzle/0013_add_meal_cards.sql', 'utf8');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS meal_cards');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS meal_card_transactions');
+  });
+
+  it('contains meal_card_transaction_items migration', () => {
+    const sql = readFileSync('./drizzle/0014_add_meal_card_transaction_items.sql', 'utf8');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS meal_card_transaction_items');
+  });
 });

@@ -52,6 +52,43 @@ export const cardTransactions = sqliteTable("card_transactions", {
   createdAt: text("created_at").default(sql`(datetime('now'))`),
 });
 
+// Cartões de alimentação (vale-refeição/alimentação) — controle mensal isolado.
+// Não interfere em renda/contas: guarda apenas o limite do mês e o extrato de compras.
+export const mealCards = sqliteTable("meal_cards", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  limitAmount: real("limit_amount").notNull().default(0),
+  color: text("color").default("#5ab28d"),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").default(sql`(datetime('now'))`),
+});
+
+export const mealCardTransactions = sqliteTable("meal_card_transactions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  mealCardId: integer("meal_card_id").notNull().references(() => mealCards.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  amount: real("amount").notNull(),
+  category: text("category"),
+  date: text("date"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
+// Itens (produtos) de uma compra — o "extrato" de uma nota/cupom.
+// Preenchido manualmente ou pela leitura de imagem via IA de visão.
+export const mealCardTransactionItems = sqliteTable("meal_card_transaction_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  transactionId: integer("transaction_id").notNull().references(() => mealCardTransactions.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  quantity: real("quantity").notNull().default(1),
+  unitPrice: real("unit_price"),
+  amount: real("amount").notNull(),
+  category: text("category"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
 export const salaries = sqliteTable("salaries", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -171,6 +208,12 @@ export type FutureBill = typeof futureBills.$inferSelect;
 export type NewFutureBill = typeof futureBills.$inferInsert;
 export type CardTransaction = typeof cardTransactions.$inferSelect;
 export type NewCardTransaction = typeof cardTransactions.$inferInsert;
+export type MealCard = typeof mealCards.$inferSelect;
+export type NewMealCard = typeof mealCards.$inferInsert;
+export type MealCardTransaction = typeof mealCardTransactions.$inferSelect;
+export type NewMealCardTransaction = typeof mealCardTransactions.$inferInsert;
+export type MealCardTransactionItem = typeof mealCardTransactionItems.$inferSelect;
+export type NewMealCardTransactionItem = typeof mealCardTransactionItems.$inferInsert;
 export type Debt = typeof debts.$inferSelect;
 export type NewDebt = typeof debts.$inferInsert;
 export type HistoryDebt = typeof historyDebts.$inferSelect;

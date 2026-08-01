@@ -19,6 +19,7 @@ import BillForm from "./BillForm";
 import BillsMobileActions from "./BillsMobileActions";
 import CardBillTransactions from "./CardBillTransactions";
 import CategoryBudgets from "./CategoryBudgets";
+import MealCardsManager from "@/components/meal-cards/MealCardsManager";
 import type { BillOwnership } from "@/lib/db/schema";
 
 export interface Bill {
@@ -812,6 +813,9 @@ export default function BillsManager() {
           </div>
         </div>
       )}
+
+      {/* Cartões alimentação — controle isolado, não afeta renda/contas */}
+      <MealCardsManager month={month} year={year} />
 
       {/* Bill Form Modal */}
       {showForm && (

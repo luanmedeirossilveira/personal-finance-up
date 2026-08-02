@@ -26,3 +26,7 @@ coverage/
 # Ignorar arquivos de configuração do sistema
 .DS_Store
 Thumbs.db
+
+graphify-out/*
+.claude
+CLAUDE.md

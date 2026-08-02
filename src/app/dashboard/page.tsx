@@ -1,9 +1,6 @@
-import { getSession } from "@/lib/auth";
-import YearOverview from "@/components/dashboard/YearOverview";
+import DashboardView from "@/components/dashboard/DashboardView";
 
-export default async function DashboardPage() {
-  const user = await getSession();
-
+export default function DashboardPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -11,10 +8,10 @@ export default async function DashboardPage() {
           Dashboard
         </h1>
         <p className="text-sm mt-1" style={{ color: "#4a6b58" }}>
-          Visão geral das suas finanças
+          Seu controle: da semana ao mês, comparando com o mês anterior
         </p>
       </div>
-      <YearOverview />
+      <DashboardView />
     </div>
   );
 }

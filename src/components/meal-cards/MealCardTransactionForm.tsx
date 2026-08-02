@@ -3,6 +3,7 @@
 
 import { useRef, useState } from "react";
 import { Camera, Plus, X, Loader2 } from "lucide-react";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 export interface MealTransactionItem {
   id?: number;
@@ -158,7 +159,7 @@ export default function MealCardTransactionForm({
   }
 
   return (
-    <>
+    <ModalPortal>
       <div
         className="fixed inset-0 z-40"
         style={{ background: "rgba(0,0,0,0.7)" }}
@@ -361,6 +362,6 @@ export default function MealCardTransactionForm({
           </div>
         </form>
       </div>
-    </>
+    </ModalPortal>
   );
 }

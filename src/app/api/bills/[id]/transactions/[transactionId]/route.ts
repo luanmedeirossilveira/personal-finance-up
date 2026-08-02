@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { eq, and } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
+import { normalizeItems } from "@/lib/items";
 
 // Recalcula o total da bill baseado nas transações
 async function recalculateBillTotal(billId: number) {
@@ -55,26 +56,62 @@ export async function PATCH(
 
   try {
     const body = await req.json();
-    
+
     // Only allow specific fields to be updated
     const allowed: any = {};
-    const fields = ["name", "amount", "installment", "category", "date"];
+    const fields = ["name", "installment", "category", "date"];
     for (const f of fields) {
       if (body[f] !== undefined) {
-        allowed[f] = f === "amount" ? parseFloat(body[f]) : body[f];
+        allowed[f] = body[f];
       }
     }
 
-    const [updated] = await db
-      .update(schema.cardTransactions)
-      .set(allowed)
-      .where(eq(schema.cardTransactions.id, transactionId))
-      .returning();
+    // Substitui os itens (produtos) quando enviados
+    let savedItems: unknown[] | undefined;
+    if (body.items !== undefined) {
+      const items = normalizeItems(body.items);
+      await db
+        .delete(schema.cardTransactionItems)
+        .where(eq(schema.cardTransactionItems.transactionId, transactionId));
+      savedItems =
+        items.length > 0
+          ? await db
+              .insert(schema.cardTransactionItems)
+              .values(items.map((it) => ({ ...it, transactionId })))
+              .returning()
+          : [];
+      // Recalcula o valor pela soma dos itens quando o total não veio explícito
+      const noAmount = body.amount === undefined || body.amount === null || body.amount === "";
+      if (noAmount && items.length > 0) {
+        allowed.amount = items.reduce((s, i) => s + i.amount, 0);
+      }
+    }
+
+    if (body.amount !== undefined && body.amount !== null && body.amount !== "") {
+      allowed.amount = parseFloat(body.amount);
+    }
+
+    let updated = transaction;
+    if (Object.keys(allowed).length > 0) {
+      [updated] = await db
+        .update(schema.cardTransactions)
+        .set(allowed)
+        .where(eq(schema.cardTransactions.id, transactionId))
+        .returning();
+    }
+
+    // Itens atuais (quando não foram substituídos nesta requisição)
+    if (savedItems === undefined) {
+      savedItems = await db.query.cardTransactionItems.findMany({
+        where: eq(schema.cardTransactionItems.transactionId, transactionId),
+        orderBy: (i, { asc }) => [asc(i.id)],
+      });
+    }
 
     // Recalcular total da bill
     await recalculateBillTotal(billId);
 
-    return NextResponse.json(updated);
+    return NextResponse.json({ ...updated, items: savedItems });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Erro ao atualizar transação" }, { status: 500 });

@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import type { MealCard } from "./MealCardsManager";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 const COLORS = ["#5ab28d", "#f59e0b", "#3b82f6", "#a855f7", "#ec4899", "#ef4444"];
 
@@ -57,7 +58,7 @@ export default function MealCardForm({
   }
 
   return (
-    <>
+    <ModalPortal>
       <div
         className="fixed inset-0 z-40"
         style={{ background: "rgba(0,0,0,0.7)" }}
@@ -152,6 +153,6 @@ export default function MealCardForm({
           </div>
         </form>
       </div>
-    </>
+    </ModalPortal>
   );
 }

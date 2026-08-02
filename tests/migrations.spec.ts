@@ -17,4 +17,10 @@ describe('migrations', () => {
     const sql = readFileSync('./drizzle/0014_add_meal_card_transaction_items.sql', 'utf8');
     expect(sql).toContain('CREATE TABLE IF NOT EXISTS meal_card_transaction_items');
   });
+
+  it('contains card_transaction_items migration', () => {
+    const sql = readFileSync('./drizzle/0015_add_card_transaction_items.sql', 'utf8');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS card_transaction_items');
+    expect(sql).toContain('REFERENCES card_transactions(id) ON DELETE CASCADE');
+  });
 });

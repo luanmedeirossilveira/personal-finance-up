@@ -1,6 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { Plus, X } from "lucide-react";
+import ModalPortal from "@/components/ui/ModalPortal";
+
+export interface CardTransactionItem {
+  id?: number;
+  name: string;
+  quantity: number;
+  unitPrice?: number | null;
+  amount: number;
+}
 
 interface CardTransaction {
   id: number;
@@ -9,6 +19,14 @@ interface CardTransaction {
   installment?: string | null;
   category?: string | null;
   date?: string | null;
+  items?: CardTransactionItem[];
+}
+
+interface ItemRow {
+  name: string;
+  quantity: string;
+  amount: string;
+  unitPrice: number | null;
 }
 
 const CATEGORIES = [
@@ -20,6 +38,20 @@ const CATEGORIES = [
   "assinaturas",
   "outros",
 ];
+
+const BRL = (v: number) =>
+  `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+
+const toNumber = (v: string) => Number.parseFloat((v || "0").replace(",", ".")) || 0;
+
+function itemsFrom(transaction?: CardTransaction | null): ItemRow[] {
+  return (transaction?.items || []).map((it) => ({
+    name: it.name,
+    quantity: String(it.quantity ?? 1),
+    amount: String(it.amount ?? 0),
+    unitPrice: it.unitPrice ?? null,
+  }));
+}
 
 export default function CardTransactionForm({
   billId,
@@ -37,18 +69,41 @@ export default function CardTransactionForm({
   const [installment, setInstallment] = useState(transaction?.installment || "");
   const [category, setCategory] = useState(transaction?.category || "");
   const [date, setDate] = useState(transaction?.date || "");
+  const [items, setItems] = useState<ItemRow[]>(itemsFrom(transaction));
   const [saving, setSaving] = useState(false);
+
+  const itemsTotal = items.reduce((s, r) => s + toNumber(r.amount), 0);
+
+  function updateItem(index: number, patch: Partial<ItemRow>) {
+    setItems((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+  }
+  function addItem() {
+    setItems((prev) => [...prev, { name: "", quantity: "1", amount: "", unitPrice: null }]);
+  }
+  function removeItem(index: number) {
+    setItems((prev) => prev.filter((_, i) => i !== index));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
 
+    const cleanItems = items
+      .filter((r) => r.name.trim() !== "")
+      .map((r) => ({
+        name: r.name.trim(),
+        quantity: toNumber(r.quantity) || 1,
+        unitPrice: r.unitPrice,
+        amount: toNumber(r.amount),
+      }));
+
     const payload = {
       name: name.trim().toUpperCase(),
-      amount: Number.parseFloat(amount.replace(",", ".")),
+      amount: amount ? Number.parseFloat(amount.replace(",", ".")) : undefined,
       installment: installment || null,
       category: category || null,
       date: date || null,
+      items: cleanItems,
     };
 
     if (transaction) {
@@ -70,7 +125,7 @@ export default function CardTransactionForm({
   }
 
   return (
-    <>
+    <ModalPortal>
       <div
         className="fixed inset-0 z-40"
         style={{ background: "rgba(0,0,0,0.7)" }}
@@ -107,6 +162,7 @@ export default function CardTransactionForm({
               <input
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
+                inputMode="decimal"
                 className="w-full p-2 rounded bg-[#0f1a15] text-sm"
                 placeholder="29,90"
                 required
@@ -156,6 +212,78 @@ export default function CardTransactionForm({
             </div>
           </div>
 
+          {/* Itens (produtos) */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+                Produtos ({items.length})
+              </span>
+              <button
+                type="button"
+                onClick={addItem}
+                className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium"
+                style={{ background: "#1c2b22", color: "#8dcdb0", border: "1px solid #2a3d31" }}
+              >
+                <Plus size={12} />
+                Item
+              </button>
+            </div>
+
+            {items.length > 0 && (
+              <div className="space-y-1.5">
+                {items.map((row, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <input
+                      value={row.name}
+                      onChange={(e) => updateItem(i, { name: e.target.value })}
+                      className="flex-1 min-w-0 p-1.5 rounded bg-[#0f1a15] text-xs"
+                      placeholder="Produto"
+                    />
+                    <input
+                      value={row.quantity}
+                      onChange={(e) => updateItem(i, { quantity: e.target.value })}
+                      inputMode="decimal"
+                      className="w-12 p-1.5 rounded bg-[#0f1a15] text-xs text-center"
+                      placeholder="1"
+                      aria-label="Quantidade"
+                    />
+                    <input
+                      value={row.amount}
+                      onChange={(e) => updateItem(i, { amount: e.target.value })}
+                      inputMode="decimal"
+                      className="w-20 p-1.5 rounded bg-[#0f1a15] text-xs text-right"
+                      placeholder="0,00"
+                      aria-label="Valor do item"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeItem(i)}
+                      className="p-1.5 rounded flex-shrink-0"
+                      style={{ background: "#1c2b22", color: "#ef4444" }}
+                      aria-label="Remover item"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[11px]" style={{ color: "#4a6b58" }}>
+                    Soma dos itens: {BRL(itemsTotal)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAmount(itemsTotal.toFixed(2))}
+                    className="text-[11px] font-medium underline"
+                    style={{ color: "#5ab28d" }}
+                  >
+                    Usar como total
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-2 justify-end pt-2">
             <button
               type="button"
@@ -176,6 +304,6 @@ export default function CardTransactionForm({
           </div>
         </form>
       </div>
-    </>
+    </ModalPortal>
   );
 }

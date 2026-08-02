@@ -52,6 +52,19 @@ export const cardTransactions = sqliteTable("card_transactions", {
   createdAt: text("created_at").default(sql`(datetime('now'))`),
 });
 
+// Itens (produtos) de uma compra no cartão de crédito — o "extrato" de uma nota/cupom.
+// Mesmo modelo dos itens de cartão alimentação: preenchido manualmente ou via IA de visão.
+export const cardTransactionItems = sqliteTable("card_transaction_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  transactionId: integer("transaction_id").notNull().references(() => cardTransactions.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  quantity: real("quantity").notNull().default(1),
+  unitPrice: real("unit_price"),
+  amount: real("amount").notNull(),
+  category: text("category"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
 // Cartões de alimentação (vale-refeição/alimentação) — controle mensal isolado.
 // Não interfere em renda/contas: guarda apenas o limite do mês e o extrato de compras.
 export const mealCards = sqliteTable("meal_cards", {
@@ -208,6 +221,8 @@ export type FutureBill = typeof futureBills.$inferSelect;
 export type NewFutureBill = typeof futureBills.$inferInsert;
 export type CardTransaction = typeof cardTransactions.$inferSelect;
 export type NewCardTransaction = typeof cardTransactions.$inferInsert;
+export type CardTransactionItem = typeof cardTransactionItems.$inferSelect;
+export type NewCardTransactionItem = typeof cardTransactionItems.$inferInsert;
 export type MealCard = typeof mealCards.$inferSelect;
 export type NewMealCard = typeof mealCards.$inferInsert;
 export type MealCardTransaction = typeof mealCardTransactions.$inferSelect;

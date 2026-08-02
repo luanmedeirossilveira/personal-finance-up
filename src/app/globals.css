@@ -33,12 +33,15 @@ body {
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  /* Termina em `none` (não `translateY(0)`): com `forwards`, um transform residual
+     — mesmo translateY(0) — tornaria o elemento containing block de descendentes
+     `position: fixed`, jogando os modais para o topo/fim da página. */
+  to { opacity: 1; transform: none; }
 }
 
 @keyframes slideIn {
   from { opacity: 0; transform: translateX(-12px); }
-  to { opacity: 1; transform: translateX(0); }
+  to { opacity: 1; transform: none; }
 }
 
 @keyframes pulse-green {

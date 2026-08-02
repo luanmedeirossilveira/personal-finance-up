@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Bill } from "./BillsManager";
 import { Check, CreditCard, Receipt } from "lucide-react";
 import type { BillOwnership } from "@/lib/db/schema";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 const CATEGORIES = [
   "moradia",
@@ -125,7 +126,7 @@ export default function BillForm({
   }
 
   return (
-    <>
+    <ModalPortal>
       <div
         className="fixed inset-0 z-40"
         style={{ background: "rgba(0,0,0,0.7)" }}
@@ -426,6 +427,6 @@ export default function BillForm({
           </div>
         </form>
       </div>
-    </>
+    </ModalPortal>
   );
 }

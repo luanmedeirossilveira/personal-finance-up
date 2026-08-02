@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import showConfirm from "@/components/ui/confirm";
 import showToast from "@/components/ui/toast";
+import ModalPortal from "@/components/ui/ModalPortal";
 import SalariesManager from "@/components/salaries/SalariesManager";
 import BillForm from "./BillForm";
 import BillsMobileActions from "./BillsMobileActions";
@@ -837,7 +838,7 @@ export default function BillsManager() {
 
       {/* Salaries Modal */}
       {showSalaries && (
-        <>
+        <ModalPortal>
           <button
             className="fixed inset-0 z-40"
             style={{ background: "rgba(0,0,0,0.7)" }}
@@ -858,7 +859,7 @@ export default function BillsManager() {
               </div>
             </div>
           </div>
-        </>
+        </ModalPortal>
       )}
     </div>
   );

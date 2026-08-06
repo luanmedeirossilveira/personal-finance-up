@@ -64,6 +64,7 @@ export default function CardTransactionForm({
   onClose: () => void;
   onSave: () => void;
 }>) {
+  const isEditing = !!transaction;
   const [name, setName] = useState(transaction?.name || "");
   const [amount, setAmount] = useState(transaction?.amount?.toString() || "");
   const [installment, setInstallment] = useState(transaction?.installment || "");
@@ -72,7 +73,21 @@ export default function CardTransactionForm({
   const [items, setItems] = useState<ItemRow[]>(itemsFrom(transaction));
   const [saving, setSaving] = useState(false);
 
+  // Compra parcelada: usuário informa o valor total e o nº de parcelas.
+  // Só disponível ao criar (edição mexe em uma parcela específica).
+  const [installmentMode, setInstallmentMode] = useState(false);
+  const [totalAmount, setTotalAmount] = useState("");
+  const [installmentCount, setInstallmentCount] = useState("");
+
   const itemsTotal = items.reduce((s, r) => s + toNumber(r.amount), 0);
+
+  // Parcelas iguais = round(total/N, 2). Mantém consistência ao carregar a mesma
+  // parcela para o próximo mês na migração (ela apenas copia o valor).
+  const parsedTotal = toNumber(totalAmount);
+  const parsedCount = Math.trunc(toNumber(installmentCount));
+  const perInstallment =
+    parsedCount > 0 ? Math.round((parsedTotal / parsedCount) * 100) / 100 : 0;
+  const installmentValid = parsedTotal > 0 && parsedCount >= 2;
 
   function updateItem(index: number, patch: Partial<ItemRow>) {
     setItems((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
@@ -97,13 +112,20 @@ export default function CardTransactionForm({
         amount: toNumber(r.amount),
       }));
 
+    const useInstallment = installmentMode && !isEditing && installmentValid;
+
     const payload = {
       name: name.trim().toUpperCase(),
-      amount: amount ? Number.parseFloat(amount.replace(",", ".")) : undefined,
-      installment: installment || null,
+      amount: useInstallment
+        ? perInstallment
+        : amount
+          ? Number.parseFloat(amount.replace(",", "."))
+          : undefined,
+      installment: useInstallment ? `1/${parsedCount}` : installment || null,
       category: category || null,
       date: date || null,
-      items: cleanItems,
+      // Compra parcelada representa a 1ª parcela — sem itens (produtos) atrelados.
+      items: useInstallment ? [] : cleanItems,
     };
 
     if (transaction) {
@@ -155,31 +177,85 @@ export default function CardTransactionForm({
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
-                Valor *
-              </label>
-              <input
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                inputMode="decimal"
-                className="w-full p-2 rounded bg-[#0f1a15] text-sm"
-                placeholder="29,90"
-                required
-              />
-            </div>
+            {!isEditing && (
+              <div className="col-span-2">
+                <label className="flex items-center gap-2 text-xs font-medium cursor-pointer" style={{ color: "#8dcdb0" }}>
+                  <input
+                    type="checkbox"
+                    checked={installmentMode}
+                    onChange={(e) => setInstallmentMode(e.target.checked)}
+                    className="accent-[#389671]"
+                  />
+                  Compra parcelada (dividir em N vezes)
+                </label>
+              </div>
+            )}
 
-            <div>
-              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
-                Parcela
-              </label>
-              <input
-                value={installment}
-                onChange={(e) => setInstallment(e.target.value)}
-                className="w-full p-2 rounded bg-[#0f1a15] text-sm"
-                placeholder="3/12"
-              />
-            </div>
+            {installmentMode && !isEditing ? (
+              <>
+                <div>
+                  <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+                    Valor total *
+                  </label>
+                  <input
+                    value={totalAmount}
+                    onChange={(e) => setTotalAmount(e.target.value)}
+                    inputMode="decimal"
+                    className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                    placeholder="1200,00"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+                    Nº de parcelas *
+                  </label>
+                  <input
+                    value={installmentCount}
+                    onChange={(e) => setInstallmentCount(e.target.value)}
+                    inputMode="numeric"
+                    className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                    placeholder="10"
+                    required
+                  />
+                </div>
+
+                <div className="col-span-2 text-[11px]" style={{ color: installmentValid ? "#5ab28d" : "#4a6b58" }}>
+                  {installmentValid
+                    ? `${parsedCount}x de ${BRL(perInstallment)} — a 1ª parcela (1/${parsedCount}) entra nesta fatura; as próximas são adicionadas ao migrar o mês.`
+                    : "Informe o valor total e um nº de parcelas ≥ 2."}
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+                    Valor *
+                  </label>
+                  <input
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    inputMode="decimal"
+                    className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                    placeholder="29,90"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+                    Parcela
+                  </label>
+                  <input
+                    value={installment}
+                    onChange={(e) => setInstallment(e.target.value)}
+                    className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                    placeholder="3/12"
+                  />
+                </div>
+              </>
+            )}
 
             <div>
               <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
@@ -212,7 +288,8 @@ export default function CardTransactionForm({
             </div>
           </div>
 
-          {/* Itens (produtos) */}
+          {/* Itens (produtos) — não se aplica a compra parcelada */}
+          {!(installmentMode && !isEditing) && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
@@ -283,6 +360,7 @@ export default function CardTransactionForm({
               </div>
             )}
           </div>
+          )}
 
           <div className="flex gap-2 justify-end pt-2">
             <button

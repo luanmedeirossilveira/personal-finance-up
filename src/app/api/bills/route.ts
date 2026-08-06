@@ -55,6 +55,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
     }
 
+    // Transações (parcelas) opcionais para faturas CARD — usadas pela migração de mês
+    // para carregar cada parcela como uma linha real na fatura do próximo mês.
+    const rawTransactions =
+      type === "CARD" && Array.isArray(body.transactions) ? body.transactions : [];
+    const transactions = rawTransactions
+      .filter((t: { name?: unknown; amount?: unknown }) => t && t.name)
+      .map((t: { name: string; amount: unknown; installment?: unknown; category?: unknown; date?: unknown }) => ({
+        name: String(t.name),
+        amount: Number.parseFloat(String(t.amount)),
+        installment: t.installment ? String(t.installment) : null,
+        category: t.category ? String(t.category) : null,
+        date: t.date ? String(t.date) : null,
+      }))
+      .filter((t: { amount: number }) => Number.isFinite(t.amount));
+
+    // Quando há transações, o total da fatura é a soma delas (fonte de verdade única).
+    const finalAmount = transactions.length
+      ? transactions.reduce((sum: number, t: { amount: number }) => sum + t.amount, 0)
+      : parseFloat(amount);
+
     const finalCategory = type === "CARD" ? "cartão" : category;
     const finalOwnership: BillOwnership =
       ownership && VALID_OWNERSHIP.includes(ownership) ? ownership : "joint";
@@ -62,7 +82,7 @@ export async function POST(req: NextRequest) {
     const [bill] = await db.insert(schema.bills).values({
       userId: user.id,
       name,
-      amount: parseFloat(amount),
+      amount: finalAmount,
       month,
       year,
       installment,
@@ -77,6 +97,19 @@ export async function POST(req: NextRequest) {
       cardLast4: type === "CARD" ? cardLast4 : null,
       cardNickname: type === "CARD" ? cardNickname : null,
     }).returning();
+
+    if (transactions.length > 0) {
+      await db.insert(schema.cardTransactions).values(
+        transactions.map((t: { name: string; amount: number; installment: string | null; category: string | null; date: string | null }) => ({
+          billId: bill.id,
+          name: t.name,
+          amount: t.amount,
+          installment: t.installment,
+          category: t.category,
+          date: t.date,
+        })),
+      );
+    }
 
     return NextResponse.json(bill, { status: 201 });
   } catch (error) {

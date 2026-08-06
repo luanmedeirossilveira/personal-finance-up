@@ -92,7 +92,7 @@ export default function MealCardTransactionForm({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        setScanError(err.error || "Não foi possível ler a imagem.");
+        setScanError(err.error || "Não foi possível ler a nota.");
         return;
       }
       const data = await res.json();
@@ -180,8 +180,7 @@ export default function MealCardTransactionForm({
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
-              capture="environment"
+              accept="image/*,application/pdf"
               className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0];
@@ -197,7 +196,7 @@ export default function MealCardTransactionForm({
               style={{ background: "#1c2b22", color: "#8dcdb0", border: "1px dashed #2a3d31" }}
             >
               {scanning ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
-              {scanning ? "Lendo cupom..." : "Escanear cupom (foto ou imagem)"}
+              {scanning ? "Lendo nota..." : "Escanear nota (foto, imagem ou PDF)"}
             </button>
             {scanError && (
               <p className="text-[11px] mt-1.5" style={{ color: "#f59e0b" }}>

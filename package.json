@@ -26,7 +26,8 @@
     "react-dom": "^18",
     "recharts": "^2.12.7",
     "resend": "^3.3.0",
-    "tailwind-merge": "^2.3.0"
+    "tailwind-merge": "^2.3.0",
+    "unpdf": "^1.7.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

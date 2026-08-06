@@ -42,6 +42,19 @@ Regras:
 export const RECEIPT_USER_PROMPT =
   "Extraia os produtos, o valor total e a data desta compra.";
 
+// Variante para leitura a partir do TEXTO de um PDF (NFC-e/DANFE/comprovante digital).
+export const RECEIPT_TEXT_SYSTEM_PROMPT = `Você extrai os produtos de um cupom fiscal ou nota de compra brasileira a partir do TEXTO de um PDF (NFC-e, DANFE ou comprovante digital).
+Responda SOMENTE com um objeto JSON válido, sem texto antes ou depois e sem markdown, neste formato exato:
+{"store": string|null, "total": number|null, "date": "YYYY-MM-DD"|null, "items": [{"name": string, "quantity": number, "unitPrice": number|null, "amount": number}]}
+Regras:
+- "amount" é o valor TOTAL do item; "total" é o valor total pago; "date" é a data da compra se visível.
+- Use ponto como separador decimal (ex.: 12.90).
+- Ignore descontos, subtotais, impostos e formas de pagamento — apenas os produtos.
+- Não invente itens: se o texto não for um cupom/nota legível, retorne items vazio.`;
+
+export const RECEIPT_TEXT_USER_PROMPT =
+  "Extraia os produtos, o valor total e a data da compra a partir do texto do cupom/nota a seguir:";
+
 // Interpreta uma resposta possivelmente "suja" (markdown, texto extra) como JSON.
 export function parseJsonLoose(text: string): unknown {
   const trimmed = text.trim();

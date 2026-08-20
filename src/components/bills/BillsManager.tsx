@@ -179,6 +179,12 @@ const OWNERSHIP_BADGE: Record<
 };
 
 type OwnershipFilter = BillOwnership | "all";
+type BillSort = "date" | "name";
+
+const SORT_OPTIONS: { value: BillSort; label: string }[] = [
+  { value: "date", label: "Data de pagamento" },
+  { value: "name", label: "Nome (A-Z)" },
+];
 
 export default function BillsManager() {
   const searchParams = useSearchParams();
@@ -193,6 +199,7 @@ export default function BillsManager() {
   );
   const [ownershipFilter, setOwnershipFilter] =
     useState<OwnershipFilter>("all");
+  const [sortBy, setSortBy] = useState<BillSort>("date");
 
   const [bills, setBills] = useState<Bill[]>([]);
   const [salaries, setSalaries] = useState<Salary[]>([]);
@@ -569,6 +576,19 @@ export default function BillsManager() {
       ? bills
       : bills.filter((b) => b.ownership === ownershipFilter);
 
+  // Padrão: data de pagamento (mais antiga primeiro); sem data cai por nome A-Z ao final.
+  const sortedBills = [...filteredBills].sort((a, b) => {
+    if (sortBy === "name") {
+      return a.name.localeCompare(b.name, "pt-BR");
+    }
+    if (a.date && b.date) {
+      return a.date.localeCompare(b.date) || a.name.localeCompare(b.name, "pt-BR");
+    }
+    if (a.date && !b.date) return -1;
+    if (!a.date && b.date) return 1;
+    return a.name.localeCompare(b.name, "pt-BR");
+  });
+
   const totalBills = filteredBills.reduce((s, b) => s + b.amount, 0);
   const pendingBills = filteredBills
     .filter((b) => !b.isPaid)
@@ -793,40 +813,55 @@ export default function BillsManager() {
         </div>
       </div>
 
-      {/* v2: Ownership filter tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {(["all", "mine", "joint", "hers"] as OwnershipFilter[]).map((key) => {
-          const cfg = OWNERSHIP_CONFIG[key];
-          const isActive = ownershipFilter === key;
-          const count =
-            key === "all"
-              ? bills.length
-              : bills.filter((b) => b.ownership === key).length;
-          return (
-            <button
-              key={key}
-              onClick={() => setOwnershipFilter(key)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0"
-              style={{
-                background: isActive ? cfg.activeBg : "#1c2b22",
-                color: isActive ? "#fff" : cfg.color,
-                border: `1px solid ${isActive ? cfg.activeBg : "#2a3d31"}`,
-              }}
-            >
-              <span>{cfg.emoji}</span>
-              {cfg.label}
-              <span
-                className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+      {/* v2: Ownership filter tabs + ordenação */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {(["all", "mine", "joint", "hers"] as OwnershipFilter[]).map((key) => {
+            const cfg = OWNERSHIP_CONFIG[key];
+            const isActive = ownershipFilter === key;
+            const count =
+              key === "all"
+                ? bills.length
+                : bills.filter((b) => b.ownership === key).length;
+            return (
+              <button
+                key={key}
+                onClick={() => setOwnershipFilter(key)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0"
                 style={{
-                  background: isActive ? "rgba(255,255,255,0.2)" : "#2a3d31",
-                  color: isActive ? "#fff" : "#4a6b58",
+                  background: isActive ? cfg.activeBg : "#1c2b22",
+                  color: isActive ? "#fff" : cfg.color,
+                  border: `1px solid ${isActive ? cfg.activeBg : "#2a3d31"}`,
                 }}
               >
-                {count}
-              </span>
-            </button>
-          );
-        })}
+                <span>{cfg.emoji}</span>
+                {cfg.label}
+                <span
+                  className="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
+                  style={{
+                    background: isActive ? "rgba(255,255,255,0.2)" : "#2a3d31",
+                    color: isActive ? "#fff" : "#4a6b58",
+                  }}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as BillSort)}
+          className="text-xs font-semibold rounded-lg px-2 py-1.5 flex-shrink-0"
+          style={{ background: "#1c2b22", color: "#8dcdb0", border: "1px solid #2a3d31" }}
+          aria-label="Ordenar contas"
+        >
+          {SORT_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value} style={{ background: "#1c2b22" }}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Summary cards */}
@@ -949,7 +984,7 @@ export default function BillsManager() {
       ) : (
         <div className="card overflow-visible">
           <div className="divide-y" style={{ borderColor: "#2a3d31" }}>
-            {filteredBills.map((bill) => {
+            {sortedBills.map((bill) => {
               const dueSoon = isDueSoon(bill);
               const overdue = isOverdue(bill);
               const isCard = bill.type === "CARD";

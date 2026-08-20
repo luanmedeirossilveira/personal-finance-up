@@ -40,6 +40,7 @@ export interface Bill {
   type?: "NORMAL" | "CARD";
   cardLast4?: string | null;
   cardNickname?: string | null;
+  date?: string | null;
 }
 
 export interface Salary {
@@ -105,6 +106,13 @@ const MONTHS = [
 
 const BRL = (v: number) =>
   `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+
+// Evita bug de fuso horário: "YYYY-MM-DD" formatado sem passar por Date/UTC.
+function formatDateBR(dateStr: string) {
+  const [y, m, d] = dateStr.split("-");
+  if (!y || !m || !d) return dateStr;
+  return `${d}/${m}/${y}`;
+}
 
 function getNextMonthYear(month: number, year: number) {
   if (month === 12) return { nextMonth: 1, nextYear: year + 1 };
@@ -380,6 +388,7 @@ export default function BillsManager() {
         type: bill.type || "NORMAL",
         cardLast4: bill.cardLast4 || null,
         cardNickname: bill.cardNickname || null,
+        date: bill.date || null,
       }));
 
       const mergedByName = new Map<string, (typeof normalPayloads)[number]>();
@@ -490,13 +499,23 @@ export default function BillsManager() {
   }
 
   async function togglePaid(bill: Bill) {
+    const nextPaid = !bill.isPaid;
+    const patch: { isPaid: boolean; date?: string } = { isPaid: nextPaid };
+    // Ao marcar como paga, registra a data de pagamento (se ainda não houver uma definida).
+    if (nextPaid && !bill.date) {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, "0");
+      const dd = String(today.getDate()).padStart(2, "0");
+      patch.date = `${yyyy}-${mm}-${dd}`;
+    }
     await fetch(`/api/bills/${bill.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isPaid: !bill.isPaid }),
+      body: JSON.stringify(patch),
     });
     setBills((prev) =>
-      prev.map((b) => (b.id === bill.id ? { ...b, isPaid: !b.isPaid } : b)),
+      prev.map((b) => (b.id === bill.id ? { ...b, ...patch } : b)),
     );
   }
 
@@ -583,9 +602,9 @@ export default function BillsManager() {
             style={{ background: "rgba(0,0,0,0.7)" }}
             onClick={() => setMigratePlan(null)}
           />
-          <div className="fixed inset-0 z-50 flex justify-center p-4 items-end sm:items-start">
+          <div className="fixed inset-0 z-50 flex justify-center p-4 items-end sm:items-center">
             <div
-              className="card rounded-t-2xl sm:rounded-2xl p-6 space-y-4 w-full sm:max-w-md max-h-[90vh] overflow-auto mt-0 sm:mt-[12vh]"
+              className="card rounded-t-2xl sm:rounded-2xl p-6 space-y-4 w-full sm:max-w-md max-h-[90vh] overflow-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div>
@@ -1023,6 +1042,14 @@ export default function BillsManager() {
                             dia {bill.dueDay}
                           </span>
                         )}
+                        {bill.date && (
+                          <span
+                            className="text-xs flex items-center gap-1 font-medium"
+                            style={{ color: bill.isPaid ? "#5ab28d" : "#4a6b58" }}
+                          >
+                            {bill.isPaid ? "Pago em" : "Data"} {formatDateBR(bill.date)}
+                          </span>
+                        )}
                         {!isCard && bill.category && (
                           <span
                             className="text-xs"
@@ -1151,7 +1178,7 @@ export default function BillsManager() {
             style={{ background: "rgba(0,0,0,0.7)" }}
             onClick={() => setShowSalaries(false)}
           />
-          <div className="fixed inset-0 z-50 flex justify-center p-4 items-end sm:items-start">
+          <div className="fixed inset-0 z-50 flex justify-center p-4 items-end sm:items-center">
             <div className="w-full sm:max-w-2xl max-h-[90vh] overflow-auto">
               <div className="card p-4">
                 <SalariesManager

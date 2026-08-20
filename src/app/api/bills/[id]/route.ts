@@ -28,6 +28,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     "type",
     "cardLast4",
     "cardNickname",
+    "date",
   ];
   for (const f of fields) {
     if (body[f] !== undefined) allowed[f] = body[f];

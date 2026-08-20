@@ -83,6 +83,7 @@ export default function BillForm({
   const [qrCode, setQrCode] = useState(bill?.qrCode || "");
   const [cardLast4, setCardLast4] = useState(bill?.cardLast4 || "");
   const [cardNickname, setCardNickname] = useState(bill?.cardNickname || "");
+  const [date, setDate] = useState(bill?.date || "");
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -105,6 +106,7 @@ export default function BillForm({
       type,
       cardLast4: type === "CARD" ? cardLast4 : null,
       cardNickname: type === "CARD" ? cardNickname : null,
+      date: date || null,
     };
 
     if (bill) {
@@ -132,10 +134,10 @@ export default function BillForm({
         style={{ background: "rgba(0,0,0,0.7)" }}
         onClick={onClose}
       />
-      <div className="fixed inset-0 z-50 flex justify-center p-4 items-end sm:items-start">
+      <div className="fixed inset-0 z-50 flex justify-center p-4 items-end sm:items-center">
         <form
           onSubmit={handleSubmit}
-          className="card rounded-t-2xl sm:rounded-2xl p-6 space-y-4 w-full sm:max-w-md max-h-[90vh] overflow-visible mt-0 sm:mt-[20vh] relative z-[60]"
+          className="card rounded-t-2xl sm:rounded-2xl p-6 space-y-4 w-full sm:max-w-md max-h-[90vh] overflow-visible relative z-[60]"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="max-h-[calc(90vh-3rem)] overflow-y-auto pr-1">
@@ -314,6 +316,20 @@ export default function BillForm({
                 onChange={(e) => setInstallment(e.target.value)}
                 className="input-base"
                 placeholder="SEMPRE ou 3/12"
+              />
+            </div>
+            <div>
+              <label
+                className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
+                style={{ color: "#8dcdb0" }}
+              >
+                Data de pagamento
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="input-base"
               />
             </div>
             {type === "NORMAL" && (

@@ -64,10 +64,10 @@ export default function MealCardForm({
         style={{ background: "rgba(0,0,0,0.7)" }}
         onClick={onClose}
       />
-      <div className="fixed inset-0 z-50 flex justify-center p-4 items-end sm:items-start">
+      <div className="fixed inset-0 z-50 flex justify-center p-4 items-end sm:items-center">
         <form
           onSubmit={handleSubmit}
-          className="card rounded-t-2xl sm:rounded-2xl p-6 space-y-4 w-full sm:max-w-md max-h-[90vh] overflow-auto mt-0 sm:mt-[20vh]"
+          className="card rounded-t-2xl sm:rounded-2xl p-6 space-y-4 w-full sm:max-w-md max-h-[90vh] overflow-auto"
           onClick={(e) => e.stopPropagation()}
         >
           <h4 className="text-sm font-bold" style={{ color: "#f0f9f4" }}>

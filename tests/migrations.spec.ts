@@ -23,4 +23,9 @@ describe('migrations', () => {
     expect(sql).toContain('CREATE TABLE IF NOT EXISTS card_transaction_items');
     expect(sql).toContain('REFERENCES card_transactions(id) ON DELETE CASCADE');
   });
+
+  it('contains date_to_bills migration', () => {
+    const sql = readFileSync('./drizzle/0016_add_date_to_bills.sql', 'utf8');
+    expect(sql).toContain('ALTER TABLE bills ADD COLUMN date TEXT');
+  });
 });

@@ -37,6 +37,7 @@ export const bills = sqliteTable("bills", {
   type: text("type").default("NORMAL"),
   cardLast4: text("card_last4"),
   cardNickname: text("card_nickname"),
+  date: text("date"),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").default(sql`(datetime('now'))`),
 });

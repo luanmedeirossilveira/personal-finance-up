@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     const {
       name, amount, month, year, installment, isPaid, dueDay,
       category, notes, barCode, qrCode, type, cardLast4, cardNickname,
-      ownership,
+      ownership, date,
     } = body;
 
     if (!name || amount === undefined || !month || !year) {
@@ -96,6 +96,7 @@ export async function POST(req: NextRequest) {
       type: type || "NORMAL",
       cardLast4: type === "CARD" ? cardLast4 : null,
       cardNickname: type === "CARD" ? cardNickname : null,
+      date: date || null,
     }).returning();
 
     if (transactions.length > 0) {

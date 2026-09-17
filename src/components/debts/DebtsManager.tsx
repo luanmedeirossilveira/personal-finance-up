@@ -82,10 +82,20 @@ interface Props {
   selectedYear?: number;
 }
 
+function getNextMonthYear(date: Date) {
+  const month = date.getMonth() + 1;
+  return month === 12
+    ? { month: 1, year: date.getFullYear() + 1 }
+    : { month: month + 1, year: date.getFullYear() };
+}
+
 export default function DebtsManager({
-  selectedMonth = new Date().getMonth() + 1,
-  selectedYear = new Date().getFullYear(),
+  selectedMonth,
+  selectedYear,
 }: Readonly<Props>) {
+  const defaultPeriod = getNextMonthYear(new Date());
+  const month = selectedMonth ?? defaultPeriod.month;
+  const year = selectedYear ?? defaultPeriod.year;
   const [items, setItems] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -107,8 +117,8 @@ export default function DebtsManager({
   const [createBillFromHistory, setCreateBillFromHistory] = useState(false);
   const [historyBillName, setHistoryBillName] = useState("");
   const [historyBillAmount, setHistoryBillAmount] = useState(0);
-  const [historyBillMonth, setHistoryBillMonth] = useState(selectedMonth);
-  const [historyBillYear, setHistoryBillYear] = useState(selectedYear);
+  const [historyBillMonth, setHistoryBillMonth] = useState(month);
+  const [historyBillYear, setHistoryBillYear] = useState(year);
   const [historyBillPaymentType, setHistoryBillPaymentType] = useState<"AVISTA" | "PARCELADA">("AVISTA");
   const [historyBillInstallments, setHistoryBillInstallments] = useState(2);
   const [historySubmitting, setHistorySubmitting] = useState(false);
@@ -121,7 +131,7 @@ export default function DebtsManager({
   async function fetchData() {
     setLoading(true);
     const res = await fetch(
-      `/api/debts?month=${selectedMonth}&year=${selectedYear}`,
+      `/api/debts?month=${month}&year=${year}`,
     );
     setItems(res.ok ? await res.json() : []);
     setLoading(false);
@@ -129,7 +139,7 @@ export default function DebtsManager({
 
   useEffect(() => {
     fetchData();
-  }, [selectedMonth, selectedYear]);
+  }, [month, year]);
 
   async function fetchHistory(debtId: number) {
     setDetailLoading(true);
@@ -141,7 +151,7 @@ export default function DebtsManager({
   async function fetchBills(debtId: number) {
     setDetailLoading(true);
     const res = await fetch(
-      `/api/debt-bill-links?debtId=${debtId}&month=${selectedMonth}&year=${selectedYear}`,
+      `/api/debt-bill-links?debtId=${debtId}&month=${month}&year=${year}`,
     );
     setBillsAvailable(res.ok ? await res.json() : []);
     setDetailLoading(false);
@@ -157,8 +167,8 @@ export default function DebtsManager({
     setCreateBillFromHistory(false);
     setHistoryBillName(`Pagamento dívida - ${debt.name}`);
     setHistoryBillAmount(debt.amount ?? 0);
-    setHistoryBillMonth(selectedMonth);
-    setHistoryBillYear(selectedYear);
+    setHistoryBillMonth(month);
+    setHistoryBillYear(year);
     setHistoryBillPaymentType("AVISTA");
     setHistoryBillInstallments(2);
     if (tab === "history") fetchHistory(debt.id!);
@@ -310,8 +320,8 @@ export default function DebtsManager({
               <th className="text-left p-2">Valor da dívida</th>
               <th className="text-left p-2">Pago total</th>
               <th className="text-left p-2">
-                Pago em {MONTHS[selectedMonth - 1].slice(0, 3)}/
-                {String(selectedYear).slice(2)}
+                Pago em {MONTHS[month - 1].slice(0, 3)}/
+                {String(year).slice(2)}
               </th>
               <th className="text-left p-2">Status</th>
               <th className="text-left p-2">Ações</th>
@@ -616,8 +626,8 @@ export default function DebtsManager({
                       </strong>
                     </span>
                     <span>
-                      Pago em {MONTHS[selectedMonth - 1].slice(0, 3)}/
-                      {String(selectedYear).slice(2)}:{" "}
+                      Pago em {MONTHS[month - 1].slice(0, 3)}/
+                      {String(year).slice(2)}:{" "}
                       <strong
                         style={{
                           color: detailDebt.paidPartial ? "#5ab28d" : "#4a6b58",
@@ -651,7 +661,7 @@ export default function DebtsManager({
                     >
                       {tab === "history"
                         ? "Renegociações"
-                        : `Bills — ${MONTHS[selectedMonth - 1]} ${selectedYear}`}
+                        : `Bills — ${MONTHS[month - 1]} ${year}`}
                     </button>
                   ))}
                 </div>
@@ -746,7 +756,7 @@ export default function DebtsManager({
                             <select
                               className="input-base w-full"
                               value={historyBillMonth}
-                              onChange={(e) => setHistoryBillMonth(Number(e.target.value) || selectedMonth)}
+                              onChange={(e) => setHistoryBillMonth(Number(e.target.value) || month)}
                             >
                               {MONTHS.map((m, idx) => (
                                 <option key={m} value={idx + 1}>
@@ -763,7 +773,7 @@ export default function DebtsManager({
                               type="number"
                               className="input-base w-full"
                               value={historyBillYear}
-                              onChange={(e) => setHistoryBillYear(Number(e.target.value) || selectedYear)}
+                              onChange={(e) => setHistoryBillYear(Number(e.target.value) || year)}
                               min={2000}
                               max={2100}
                               required
@@ -873,8 +883,8 @@ export default function DebtsManager({
                 ) : // ── Aba Bills do mês ──
                 billsAvailable.length === 0 ? (
                   <p className="text-sm" style={{ color: "#4a6b58" }}>
-                    Nenhuma bill encontrada para {MONTHS[selectedMonth - 1]}{" "}
-                    {selectedYear}.
+                    Nenhuma bill encontrada para {MONTHS[month - 1]}{" "}
+                    {year}.
                   </p>
                 ) : (
                   <table className="w-full text-sm">

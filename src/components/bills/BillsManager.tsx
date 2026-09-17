@@ -119,6 +119,11 @@ function getNextMonthYear(month: number, year: number) {
   return { nextMonth: month + 1, nextYear: year };
 }
 
+function getDefaultPeriod(date: Date) {
+  const next = getNextMonthYear(date.getMonth() + 1, date.getFullYear());
+  return { month: next.nextMonth, year: next.nextYear };
+}
+
 function incrementInstallment(installment?: string) {
   const normalized = (installment || "").trim();
   if (!normalized) return null;
@@ -191,11 +196,12 @@ export default function BillsManager() {
   const router = useRouter();
 
   const now = new Date();
+  const defaultPeriod = getDefaultPeriod(now);
   const [month, setMonth] = useState(
-    Number.parseInt(searchParams.get("month") || String(now.getMonth() + 1), 10),
+    Number.parseInt(searchParams.get("month") || String(defaultPeriod.month), 10),
   );
   const [year, setYear] = useState(
-    Number.parseInt(searchParams.get("year") || String(now.getFullYear()), 10),
+    Number.parseInt(searchParams.get("year") || String(defaultPeriod.year), 10),
   );
   const [ownershipFilter, setOwnershipFilter] =
     useState<OwnershipFilter>("all");

@@ -76,10 +76,18 @@ const BRL = (v: number) =>
 const BRL0 = (v: number) =>
   `R$ ${v.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
 
+function getNextMonthYear(date: Date) {
+  const month = date.getMonth() + 1;
+  return month === 12
+    ? { month: 1, year: date.getFullYear() + 1 }
+    : { month: month + 1, year: date.getFullYear() };
+}
+
 export default function DashboardView() {
   const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const defaultPeriod = getNextMonthYear(now);
+  const [year, setYear] = useState(defaultPeriod.year);
+  const [month, setMonth] = useState(defaultPeriod.month);
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [futureAlerts, setFutureAlerts] = useState<
@@ -175,8 +183,12 @@ export default function DashboardView() {
         {!isCurrentPeriod && (
           <button
             onClick={() => {
-              setMonth(now.getMonth() + 1);
-              setYear(now.getFullYear());
+              const currentPeriod = {
+                month: now.getMonth() + 1,
+                year: now.getFullYear(),
+              };
+              setMonth(currentPeriod.month);
+              setYear(currentPeriod.year);
             }}
             className="text-xs font-medium px-3 py-1.5 rounded-lg"
             style={{ background: "#1c2b22", color: "#5ab28d", border: "1px solid #2a3d31" }}

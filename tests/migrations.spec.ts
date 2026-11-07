@@ -29,3 +29,41 @@ describe('migrations', () => {
     expect(sql).toContain('ALTER TABLE bills ADD COLUMN date TEXT');
   });
 });
+
+describe('migrations v3', () => {
+  it('contains accounts/investments migration', () => {
+    const sql = readFileSync('./drizzle/0017_add_accounts_and_investments.sql', 'utf8');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS pluggy_items');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS accounts');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS investments');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS net_worth_snapshots');
+    expect(sql).toContain('ALTER TABLE bills ADD COLUMN investment_id INTEGER');
+  });
+
+  it('contains bank_transactions migration with idempotency key', () => {
+    const sql = readFileSync('./drizzle/0018_add_bank_transactions.sql', 'utf8');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS bank_transactions');
+    expect(sql).toContain('UNIQUE(user_id, source, external_id)');
+  });
+
+  it('contains insights migration', () => {
+    const sql = readFileSync('./drizzle/0019_add_insights.sql', 'utf8');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS insights');
+  });
+});
+
+describe('migrations v3 — fechamento do mês', () => {
+  it('contains month_closings migration', () => {
+    const sql = readFileSync('./drizzle/0020_add_month_closings.sql', 'utf8');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS month_closings');
+    expect(sql).toContain('UNIQUE(user_id, month, year)');
+  });
+});
+
+describe('migrations v3 — cartões planejados', () => {
+  it('contains cards migration and open bill column', () => {
+    const sql = readFileSync('./drizzle/0021_add_cards_and_open_bill.sql', 'utf8');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS cards');
+    expect(sql).toContain('ALTER TABLE accounts ADD COLUMN open_bill_amount REAL');
+  });
+});

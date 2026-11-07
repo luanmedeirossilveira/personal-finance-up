@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { eq, and } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
+import { CLOSED_MONTH_ERROR, isMonthClosed } from "@/lib/month-closing";
 import type { BillOwnership } from "@/lib/db/schema";
 
 const VALID_OWNERSHIP: BillOwnership[] = ["mine", "hers", "joint"];
@@ -48,11 +49,14 @@ export async function POST(req: NextRequest) {
     const {
       name, amount, month, year, installment, isPaid, dueDay,
       category, notes, barCode, qrCode, type, cardLast4, cardNickname,
-      ownership, date,
+      ownership, date, investmentId,
     } = body;
 
     if (!name || amount === undefined || !month || !year) {
       return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
+    }
+    if (await isMonthClosed(user.id, Number(month), Number(year))) {
+      return NextResponse.json(CLOSED_MONTH_ERROR, { status: 409 });
     }
 
     // Transações (parcelas) opcionais para faturas CARD — usadas pela migração de mês
@@ -97,6 +101,7 @@ export async function POST(req: NextRequest) {
       cardLast4: type === "CARD" ? cardLast4 : null,
       cardNickname: type === "CARD" ? cardNickname : null,
       date: date || null,
+      investmentId: investmentId ? Number(investmentId) : null,
     }).returning();
 
     if (transactions.length > 0) {

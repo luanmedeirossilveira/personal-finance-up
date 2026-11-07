@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Attachments, Bill } from "./BillsManager";
+import type { Attachments, Bill } from "@/components/month/types";
 import { Copy, FileText, MoreHorizontal, Pencil, Receipt, Trash2, X } from "lucide-react";
 
 export default function BillsMobileActions({
@@ -24,7 +24,7 @@ export default function BillsMobileActions({
       <button
         onClick={() => setOpen((v) => !v)}
         className="p-1.5 rounded-lg"
-        style={{ color: "#4a6b58" }}
+        style={{ color: "rgb(var(--text-muted))" }}
       >
         <MoreHorizontal size={18} />
       </button>
@@ -37,13 +37,13 @@ export default function BillsMobileActions({
           />
           <div
             className="absolute right-0 z-50 mt-1 w-48 rounded-xl overflow-hidden shadow-xl"
-            style={{ background: "#1c2b22", border: "1px solid #2a3d31" }}
+            style={{ background: "rgb(var(--surface-raised))", border: "1px solid rgb(var(--border))" }}
           >
             {/* Editar */}
             <button
               onClick={() => { setOpen(false); onEdit(); }}
-              className="flex items-center gap-2 w-full px-4 py-3 text-sm text-left hover:bg-white/5"
-              style={{ color: "#f0f9f4" }}
+              className="flex items-center gap-2 w-full px-4 py-3 text-sm text-left hover:bg-fg/5"
+              style={{ color: "rgb(var(--text))" }}
             >
               <Pencil size={14} /> Editar
             </button>
@@ -55,22 +55,22 @@ export default function BillsMobileActions({
                   href={att.fatura.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 w-full px-4 py-3 text-sm hover:bg-white/5"
-                  style={{ color: "#5ab28d" }}
+                  className="flex items-center gap-2 w-full px-4 py-3 text-sm hover:bg-fg/5"
+                  style={{ color: "rgb(var(--accent))" }}
                   onClick={() => setOpen(false)}
                 >
                   <FileText size={14} /> Ver fatura
                 </a>
                 <button
                   onClick={() => { setOpen(false); onDeleteAttachment(bill.id, "fatura"); }}
-                  className="flex items-center gap-2 w-full px-4 py-3 text-sm text-left hover:bg-white/5"
-                  style={{ color: "#4a6b58" }}
+                  className="flex items-center gap-2 w-full px-4 py-3 text-sm text-left hover:bg-fg/5"
+                  style={{ color: "rgb(var(--text-muted))" }}
                 >
                   <X size={14} /> Remover fatura
                 </button>
               </>
             ) : (
-              <label className="flex items-center gap-2 w-full px-4 py-3 text-sm hover:bg-white/5 cursor-pointer" style={{ color: "#f0f9f4" }}>
+              <label className="flex items-center gap-2 w-full px-4 py-3 text-sm hover:bg-fg/5 cursor-pointer" style={{ color: "rgb(var(--text))" }}>
                 <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
                   onChange={(e) => { setOpen(false); onUpload(bill.id, "fatura", e.target.files?.[0]); }} />
                 <FileText size={14} /> Anexar fatura
@@ -84,22 +84,22 @@ export default function BillsMobileActions({
                   href={att.comprovante.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 w-full px-4 py-3 text-sm hover:bg-white/5"
-                  style={{ color: "#5ab28d" }}
+                  className="flex items-center gap-2 w-full px-4 py-3 text-sm hover:bg-fg/5"
+                  style={{ color: "rgb(var(--accent))" }}
                   onClick={() => setOpen(false)}
                 >
                   <Receipt size={14} /> Ver comprovante
                 </a>
                 <button
                   onClick={() => { setOpen(false); onDeleteAttachment(bill.id, "comprovante"); }}
-                  className="flex items-center gap-2 w-full px-4 py-3 text-sm text-left hover:bg-white/5"
-                  style={{ color: "#4a6b58" }}
+                  className="flex items-center gap-2 w-full px-4 py-3 text-sm text-left hover:bg-fg/5"
+                  style={{ color: "rgb(var(--text-muted))" }}
                 >
                   <X size={14} /> Remover comprovante
                 </button>
               </>
             ) : (
-              <label className="flex items-center gap-2 w-full px-4 py-3 text-sm hover:bg-white/5 cursor-pointer" style={{ color: "#f0f9f4" }}>
+              <label className="flex items-center gap-2 w-full px-4 py-3 text-sm hover:bg-fg/5 cursor-pointer" style={{ color: "rgb(var(--text))" }}>
                 <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
                   onChange={(e) => { setOpen(false); onUpload(bill.id, "comprovante", e.target.files?.[0]); }} />
                 <Receipt size={14} /> Anexar comprovante
@@ -110,19 +110,19 @@ export default function BillsMobileActions({
             {bill.barCode && (
               <button
                 onClick={() => { setOpen(false); navigator.clipboard.writeText(bill.barCode!); }}
-                className="flex items-center gap-2 w-full px-4 py-3 text-sm text-left hover:bg-white/5"
-                style={{ color: "#f0f9f4" }}
+                className="flex items-center gap-2 w-full px-4 py-3 text-sm text-left hover:bg-fg/5"
+                style={{ color: "rgb(var(--text))" }}
               >
                 <Copy size={14} /> Copiar código de barras
               </button>
             )}
 
             {/* Divider + Deletar */}
-            <div style={{ borderTop: "1px solid #2a3d31" }} />
+            <div style={{ borderTop: "1px solid rgb(var(--border))" }} />
             <button
               onClick={() => { setOpen(false); onDelete(); }}
               className="flex items-center gap-2 w-full px-4 py-3 text-sm text-left hover:bg-red-500/10"
-              style={{ color: "#ef4444" }}
+              style={{ color: "rgb(var(--negative))" }}
             >
               <Trash2 size={14} /> Remover conta
             </button>

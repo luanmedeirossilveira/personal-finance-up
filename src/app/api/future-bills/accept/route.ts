@@ -35,6 +35,6 @@ export async function GET(req: NextRequest) {
   await db.update(schema.futureBills).set({ notified: true }).where(eq(schema.futureBills.id, id));
 
   // redirect to contas page for that month/year
-  const redirectUrl = `/contas?month=${bill.month}&year=${bill.year}`;
+  const redirectUrl = `/mes?month=${bill.month}&year=${bill.year}`;
   return NextResponse.redirect(redirectUrl);
 }

@@ -70,7 +70,7 @@ export default function MealCardTransactions({
 
   if (loading) {
     return (
-      <div className="text-xs py-3" style={{ color: "#4a6b58" }}>
+      <div className="text-xs py-3" style={{ color: "rgb(var(--text-muted))" }}>
         Carregando extrato...
       </div>
     );
@@ -81,7 +81,7 @@ export default function MealCardTransactions({
       <div className="flex items-center justify-between py-2">
         <span
           className="text-xs font-medium uppercase tracking-wide"
-          style={{ color: "#4a6b58" }}
+          style={{ color: "rgb(var(--text-muted))" }}
         >
           Extrato ({transactions.length})
         </span>
@@ -91,7 +91,7 @@ export default function MealCardTransactions({
             setShowForm(true);
           }}
           className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium"
-          style={{ background: "#1c2b22", color: "#8dcdb0", border: "1px solid #2a3d31" }}
+          style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--text-soft))", border: "1px solid rgb(var(--border))" }}
         >
           <Plus size={12} />
           Adicionar compra
@@ -99,11 +99,11 @@ export default function MealCardTransactions({
       </div>
 
       {transactions.length === 0 ? (
-        <div className="text-xs py-2" style={{ color: "#4a6b58" }}>
+        <div className="text-xs py-2" style={{ color: "rgb(var(--text-muted))" }}>
           Nenhuma compra registrada
         </div>
       ) : (
-        <div className="divide-y" style={{ borderColor: "#2a3d31" }}>
+        <div className="divide-y" style={{ borderColor: "rgb(var(--border))" }}>
           {transactions.map((t) => {
             const items = t.items || [];
             const hasItems = items.length > 0;
@@ -114,13 +114,13 @@ export default function MealCardTransactions({
                   <div className="flex-1 min-w-0">
                     <div
                       className="text-sm font-medium truncate"
-                      style={{ color: "#f0f9f4" }}
+                      style={{ color: "rgb(var(--text))" }}
                     >
                       {t.name}
                     </div>
                     <div
                       className="flex items-center gap-2 text-xs"
-                      style={{ color: "#4a6b58" }}
+                      style={{ color: "rgb(var(--text-muted))" }}
                     >
                       {t.category && <span>{t.category}</span>}
                       {t.date && (
@@ -134,7 +134,7 @@ export default function MealCardTransactions({
                           type="button"
                           onClick={() => toggle(t.id)}
                           className="flex items-center gap-0.5"
-                          style={{ color: "#5ab28d" }}
+                          style={{ color: "rgb(var(--accent))" }}
                         >
                           <Receipt size={11} />
                           {items.length} {items.length === 1 ? "item" : "itens"}
@@ -146,7 +146,7 @@ export default function MealCardTransactions({
 
                   <div
                     className="text-sm font-bold font-numeric w-24 text-right"
-                    style={{ color: "#f0f9f4" }}
+                    style={{ color: "rgb(var(--text))" }}
                   >
                     {BRL(t.amount)}
                   </div>
@@ -158,7 +158,7 @@ export default function MealCardTransactions({
                         setShowForm(true);
                       }}
                       className="p-1.5 rounded"
-                      style={{ background: "#1c2b22", color: "#8dcdb0" }}
+                      style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--text-soft))" }}
                       aria-label="Editar compra"
                     >
                       <Pencil size={12} />
@@ -166,7 +166,7 @@ export default function MealCardTransactions({
                     <button
                       onClick={() => handleDelete(t.id)}
                       className="p-1.5 rounded"
-                      style={{ background: "#1c2b22", color: "#ef4444" }}
+                      style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--negative))" }}
                       aria-label="Remover compra"
                     >
                       <Trash2 size={12} />
@@ -178,18 +178,18 @@ export default function MealCardTransactions({
                 {hasItems && isOpen && (
                   <div
                     className="pb-2 pl-1 space-y-1"
-                    style={{ borderLeft: "2px solid #2a3d31", marginLeft: "2px" }}
+                    style={{ borderLeft: "2px solid rgb(var(--border))", marginLeft: "2px" }}
                   >
                     {items.map((it, idx) => (
                       <div
                         key={it.id ?? `${it.name}-${idx}`}
                         className="flex items-center justify-between text-xs pl-2"
                       >
-                        <span className="truncate" style={{ color: "#8dcdb0" }}>
+                        <span className="truncate" style={{ color: "rgb(var(--text-soft))" }}>
                           {it.quantity && it.quantity !== 1 ? `${fmtQty(it.quantity)}× ` : ""}
                           {it.name}
                         </span>
-                        <span className="font-numeric flex-shrink-0 ml-2" style={{ color: "#4a6b58" }}>
+                        <span className="font-numeric flex-shrink-0 ml-2" style={{ color: "rgb(var(--text-muted))" }}>
                           {BRL(it.amount)}
                         </span>
                       </div>
@@ -205,17 +205,17 @@ export default function MealCardTransactions({
       {transactions.length > 0 && (
         <div
           className="flex items-center justify-between pt-2 border-t"
-          style={{ borderColor: "#2a3d31" }}
+          style={{ borderColor: "rgb(var(--border))" }}
         >
           <span
             className="text-xs font-medium uppercase tracking-wide"
-            style={{ color: "#8dcdb0" }}
+            style={{ color: "rgb(var(--text-soft))" }}
           >
             Total gasto
           </span>
           <span
             className="text-sm font-bold font-numeric"
-            style={{ color: "#f0f9f4" }}
+            style={{ color: "rgb(var(--text))" }}
           >
             {BRL(total)}
           </span>

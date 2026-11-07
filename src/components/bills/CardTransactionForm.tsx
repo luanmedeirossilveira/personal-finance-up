@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
+import { CARD_TX_CATEGORIES, categoryLabel, normalizeCategory } from "@/lib/categories";
 import ModalPortal from "@/components/ui/ModalPortal";
 
 export interface CardTransactionItem {
@@ -29,15 +30,6 @@ interface ItemRow {
   unitPrice: number | null;
 }
 
-const CATEGORIES = [
-  "alimentação",
-  "compras",
-  "lazer",
-  "saúde",
-  "transporte",
-  "assinaturas",
-  "outros",
-];
 
 const BRL = (v: number) =>
   `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
@@ -68,7 +60,7 @@ export default function CardTransactionForm({
   const [name, setName] = useState(transaction?.name || "");
   const [amount, setAmount] = useState(transaction?.amount?.toString() || "");
   const [installment, setInstallment] = useState(transaction?.installment || "");
-  const [category, setCategory] = useState(transaction?.category || "");
+  const [category, setCategory] = useState(transaction?.category ? normalizeCategory(transaction.category) : "");
   const [date, setDate] = useState(transaction?.date || "");
   const [items, setItems] = useState<ItemRow[]>(itemsFrom(transaction));
   const [saving, setSaving] = useState(false);
@@ -159,19 +151,19 @@ export default function CardTransactionForm({
           className="card rounded-t-2xl sm:rounded-2xl p-6 space-y-4 w-full sm:max-w-md max-h-[90vh] overflow-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          <h4 className="text-sm font-bold" style={{ color: "#f0f9f4" }}>
+          <h4 className="text-sm font-bold" style={{ color: "rgb(var(--text))" }}>
             {transaction ? "Editar transação" : "Nova transação"}
           </h4>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
                 Descrição *
               </label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
                 placeholder="SPOTIFY"
                 required
               />
@@ -179,12 +171,12 @@ export default function CardTransactionForm({
 
             {!isEditing && (
               <div className="col-span-2">
-                <label className="flex items-center gap-2 text-xs font-medium cursor-pointer" style={{ color: "#8dcdb0" }}>
+                <label className="flex items-center gap-2 text-xs font-medium cursor-pointer" style={{ color: "rgb(var(--text-soft))" }}>
                   <input
                     type="checkbox"
                     checked={installmentMode}
                     onChange={(e) => setInstallmentMode(e.target.checked)}
-                    className="accent-[#389671]"
+                    className="accent-[rgb(var(--accent-strong))]"
                   />
                   Compra parcelada (dividir em N vezes)
                 </label>
@@ -194,34 +186,34 @@ export default function CardTransactionForm({
             {installmentMode && !isEditing ? (
               <>
                 <div>
-                  <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+                  <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
                     Valor total *
                   </label>
                   <input
                     value={totalAmount}
                     onChange={(e) => setTotalAmount(e.target.value)}
                     inputMode="decimal"
-                    className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                    className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
                     placeholder="1200,00"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+                  <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
                     Nº de parcelas *
                   </label>
                   <input
                     value={installmentCount}
                     onChange={(e) => setInstallmentCount(e.target.value)}
                     inputMode="numeric"
-                    className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                    className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
                     placeholder="10"
                     required
                   />
                 </div>
 
-                <div className="col-span-2 text-[11px]" style={{ color: installmentValid ? "#5ab28d" : "#4a6b58" }}>
+                <div className="col-span-2 text-[11px]" style={{ color: installmentValid ? "rgb(var(--accent))" : "rgb(var(--text-muted))" }}>
                   {installmentValid
                     ? `${parsedCount}x de ${BRL(perInstallment)} — a 1ª parcela (1/${parsedCount}) entra nesta fatura; as próximas são adicionadas ao migrar o mês.`
                     : "Informe o valor total e um nº de parcelas ≥ 2."}
@@ -230,27 +222,27 @@ export default function CardTransactionForm({
             ) : (
               <>
                 <div>
-                  <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+                  <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
                     Valor *
                   </label>
                   <input
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     inputMode="decimal"
-                    className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                    className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
                     placeholder="29,90"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+                  <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
                     Parcela
                   </label>
                   <input
                     value={installment}
                     onChange={(e) => setInstallment(e.target.value)}
-                    className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                    className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
                     placeholder="3/12"
                   />
                 </div>
@@ -258,32 +250,32 @@ export default function CardTransactionForm({
             )}
 
             <div>
-              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
                 Categoria
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
               >
                 <option value="">Selecionar...</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c} style={{ background: "#1c2b22" }}>
-                    {c.charAt(0).toUpperCase() + c.slice(1)}
+                {CARD_TX_CATEGORIES.map((c) => (
+                  <option key={c} value={c} style={{ background: "rgb(var(--surface-raised))" }}>
+                    {categoryLabel(c)}
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
                 Data
               </label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
               />
             </div>
           </div>
@@ -292,14 +284,14 @@ export default function CardTransactionForm({
           {!(installmentMode && !isEditing) && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+              <span className="text-xs font-medium uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
                 Produtos ({items.length})
               </span>
               <button
                 type="button"
                 onClick={addItem}
                 className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium"
-                style={{ background: "#1c2b22", color: "#8dcdb0", border: "1px solid #2a3d31" }}
+                style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--text-soft))", border: "1px solid rgb(var(--border))" }}
               >
                 <Plus size={12} />
                 Item
@@ -313,14 +305,14 @@ export default function CardTransactionForm({
                     <input
                       value={row.name}
                       onChange={(e) => updateItem(i, { name: e.target.value })}
-                      className="flex-1 min-w-0 p-1.5 rounded bg-[#0f1a15] text-xs"
+                      className="flex-1 min-w-0 p-1.5 rounded bg-[rgb(var(--bg))] text-xs"
                       placeholder="Produto"
                     />
                     <input
                       value={row.quantity}
                       onChange={(e) => updateItem(i, { quantity: e.target.value })}
                       inputMode="decimal"
-                      className="w-12 p-1.5 rounded bg-[#0f1a15] text-xs text-center"
+                      className="w-12 p-1.5 rounded bg-[rgb(var(--bg))] text-xs text-center"
                       placeholder="1"
                       aria-label="Quantidade"
                     />
@@ -328,7 +320,7 @@ export default function CardTransactionForm({
                       value={row.amount}
                       onChange={(e) => updateItem(i, { amount: e.target.value })}
                       inputMode="decimal"
-                      className="w-20 p-1.5 rounded bg-[#0f1a15] text-xs text-right"
+                      className="w-20 p-1.5 rounded bg-[rgb(var(--bg))] text-xs text-right"
                       placeholder="0,00"
                       aria-label="Valor do item"
                     />
@@ -336,7 +328,7 @@ export default function CardTransactionForm({
                       type="button"
                       onClick={() => removeItem(i)}
                       className="p-1.5 rounded flex-shrink-0"
-                      style={{ background: "#1c2b22", color: "#ef4444" }}
+                      style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--negative))" }}
                       aria-label="Remover item"
                     >
                       <X size={12} />
@@ -345,14 +337,14 @@ export default function CardTransactionForm({
                 ))}
 
                 <div className="flex items-center justify-between pt-1">
-                  <span className="text-[11px]" style={{ color: "#4a6b58" }}>
+                  <span className="text-[11px]" style={{ color: "rgb(var(--text-muted))" }}>
                     Soma dos itens: {BRL(itemsTotal)}
                   </span>
                   <button
                     type="button"
                     onClick={() => setAmount(itemsTotal.toFixed(2))}
                     className="text-[11px] font-medium underline"
-                    style={{ color: "#5ab28d" }}
+                    style={{ color: "rgb(var(--accent))" }}
                   >
                     Usar como total
                   </button>
@@ -367,7 +359,7 @@ export default function CardTransactionForm({
               type="button"
               onClick={onClose}
               className="px-3 py-2 rounded text-sm"
-              style={{ background: "#1c2b22", border: "1px solid #2a3d31", color: "#8dcdb0" }}
+              style={{ background: "rgb(var(--surface-raised))", border: "1px solid rgb(var(--border))", color: "rgb(var(--text-soft))" }}
             >
               Cancelar
             </button>
@@ -375,7 +367,7 @@ export default function CardTransactionForm({
               type="submit"
               disabled={saving}
               className="px-3 py-2 rounded text-sm font-semibold"
-              style={{ background: "#389671", color: "#fff" }}
+              style={{ background: "rgb(var(--accent-strong))", color: "rgb(var(--on-accent))" }}
             >
               {saving ? "Salvando..." : transaction ? "Salvar" : "Adicionar"}
             </button>

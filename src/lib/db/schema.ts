@@ -38,6 +38,8 @@ export const bills = sqliteTable("bills", {
   cardLast4: text("card_last4"),
   cardNickname: text("card_nickname"),
   date: text("date"),
+  // v3: aporte vinculado a um investimento (categoria investimentos). FK na migration 0017.
+  investmentId: integer("investment_id"),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").default(sql`(datetime('now'))`),
 });
@@ -197,6 +199,128 @@ export const weeklyCheckins = sqliteTable("weekly_checkins", {
   createdAt: text("created_at").default(sql`(datetime('now'))`),
 });
 
+// v3 / Fase 2: Patrimônio — conexões Pluggy, contas, investimentos e retratos
+export const pluggyItems = sqliteTable("pluggy_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  itemId: text("item_id").notNull().unique(),
+  connectorName: text("connector_name"),
+  status: text("status"),
+  lastSyncAt: text("last_sync_at"),
+  lastError: text("last_error"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
+export const accounts = sqliteTable("accounts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  type: text("type", { enum: ["checking", "savings", "credit", "meal", "investment"] }).notNull().default("checking"),
+  institution: text("institution"),
+  number: text("number"),
+  balance: real("balance").notNull().default(0),
+  ownership: text("ownership", { enum: ["mine", "hers", "joint"] }).notNull().default("mine"),
+  source: text("source", { enum: ["manual", "pluggy"] }).notNull().default("manual"),
+  pluggyAccountId: text("pluggy_account_id").unique(),
+  pluggyItemId: text("pluggy_item_id"),
+  billClosingDate: text("bill_closing_date"),
+  billDueDate: text("bill_due_date"),
+  // Cartões: fatura em aberto (o balance da Pluggy é o limite usado, com parcelas futuras).
+  openBillAmount: real("open_bill_amount"),
+  lastSyncAt: text("last_sync_at"),
+  lastImportAt: text("last_import_at"),
+  archived: integer("archived", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").default(sql`(datetime('now'))`),
+});
+
+export const investments = sqliteTable("investments", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  accountId: integer("account_id").references(() => accounts.id, { onDelete: "set null" }),
+  name: text("name").notNull(),
+  type: text("type").notNull().default("outro"),
+  appliedAmount: real("applied_amount").notNull().default(0),
+  balance: real("balance").notNull().default(0),
+  dueDate: text("due_date"),
+  source: text("source", { enum: ["manual", "pluggy"] }).notNull().default("manual"),
+  pluggyInvestmentId: text("pluggy_investment_id").unique(),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").default(sql`(datetime('now'))`),
+});
+
+export const netWorthSnapshots = sqliteTable("net_worth_snapshots", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  date: text("date").notNull(),
+  accountsTotal: real("accounts_total").notNull().default(0),
+  investmentsTotal: real("investments_total").notNull().default(0),
+  debtsTotal: real("debts_total").notNull().default(0),
+  netWorth: real("net_worth").notNull().default(0),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
+// v3 / Fase 2: transações bancárias (Pluggy ou importação) — conciliação com contas
+export const bankTransactions = sqliteTable("bank_transactions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  accountId: integer("account_id").references(() => accounts.id, { onDelete: "cascade" }),
+  source: text("source", { enum: ["pluggy", "import"] }).notNull(),
+  externalId: text("external_id").notNull(),
+  date: text("date").notNull(),
+  amount: real("amount").notNull(),
+  description: text("description").notNull(),
+  category: text("category"),
+  ownership: text("ownership", { enum: ["mine", "hers", "joint"] }).notNull().default("mine"),
+  status: text("status", { enum: ["pending", "suggested", "matched", "categorized", "ignored"] })
+    .notNull()
+    .default("pending"),
+  billId: integer("bill_id").references(() => bills.id, { onDelete: "set null" }),
+  cardTransactionId: integer("card_transaction_id").references(() => cardTransactions.id, { onDelete: "set null" }),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
+// v3 / Fase 3: insights da semana
+export const insights = sqliteTable("insights", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  weekNumber: integer("week_number").notNull(),
+  year: integer("year").notNull(),
+  type: text("type").notNull(),
+  tone: text("tone", { enum: ["positive", "warning", "negative"] }).notNull().default("warning"),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  action: text("action"),
+  facts: text("facts").notNull().default("{}"),
+  source: text("source", { enum: ["rules", "ai"] }).notNull().default("rules"),
+  rank: integer("rank").notNull().default(0),
+  vote: integer("vote"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
+// v3: cartões como limite planejado (fora do patrimônio líquido)
+export const cards = sqliteTable("cards", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  ownership: text("ownership", { enum: ["mine", "hers", "joint"] }).notNull().default("mine"),
+  monthlyLimit: real("monthly_limit").notNull().default(0),
+  matchTerms: text("match_terms").notNull().default(""),
+  accountId: integer("account_id").references(() => accounts.id, { onDelete: "set null" }),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").default(sql`(datetime('now'))`),
+});
+
+// v3: fechamento do mês ("Fechar conta")
+export const monthClosings = sqliteTable("month_closings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  summary: text("summary").notNull().default("{}"),
+  closedAt: text("closed_at").default(sql`(datetime('now'))`),
+});
+
 // Relations
 export const historyDebtsRelations = relations(historyDebts, ({ one, many }) => ({
   user: one(users, { fields: [historyDebts.userId], references: [users.id] }),
@@ -209,6 +333,10 @@ export const debtBillLinksRelations = relations(debtBillLinks, ({ one }) => ({
   debt: one(debts, { fields: [debtBillLinks.debtId], references: [debts.id] }),
   bill: one(bills, { fields: [debtBillLinks.billId], references: [bills.id] }),
   historyDebt: one(historyDebts, { fields: [debtBillLinks.historyDebtId], references: [historyDebts.id] }),
+}));
+
+export const investmentsRelations = relations(investments, ({ one }) => ({
+  account: one(accounts, { fields: [investments.accountId], references: [accounts.id] }),
 }));
 
 // Types
@@ -247,9 +375,22 @@ export type BillOwnership = "mine" | "hers" | "joint";
 export type RiskAlertType = "installments_growth" | "fixed_growth" | "card_recurrence";
 export type RiskSeverity = "warning" | "danger";
 export type CheckinType = "weekly" | "monthly";
+export type PluggyItem = typeof pluggyItems.$inferSelect;
+export type Account = typeof accounts.$inferSelect;
+export type NewAccount = typeof accounts.$inferInsert;
+export type AccountType = Account["type"];
+export type Investment = typeof investments.$inferSelect;
+export type NewInvestment = typeof investments.$inferInsert;
+export type NetWorthSnapshot = typeof netWorthSnapshots.$inferSelect;
+export type BankTransaction = typeof bankTransactions.$inferSelect;
+export type NewBankTransaction = typeof bankTransactions.$inferInsert;
+export type BankTransactionStatus = BankTransaction["status"];
+export type Insight = typeof insights.$inferSelect;
+export type MonthClosing = typeof monthClosings.$inferSelect;
+export type Card = typeof cards.$inferSelect;
+export type NewInsight = typeof insights.$inferInsert;
 
-export const BILL_CATEGORIES = [
-  "moradia", "transporte", "saude", "lazer",
-  "investimentos", "alimentação", "cartão", "assinaturas", "vestuário", "beleza", "dívidas", "outros",
-] as const;
-export type BillCategory = (typeof BILL_CATEGORIES)[number];
+export const INVESTMENT_TYPES = ["cdb", "tesouro", "lci_lca", "fundo", "acao", "previdencia", "outro"] as const;
+
+// Lista única de categorias (contas, cartão de crédito, limites) — ver lib/categories.ts.
+export { SPENDING_CATEGORIES as BILL_CATEGORIES, type SpendingCategory as BillCategory } from "@/lib/categories";

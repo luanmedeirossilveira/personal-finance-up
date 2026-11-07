@@ -3,26 +3,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Settings2, AlertTriangle, TrendingUp, ChevronDown } from "lucide-react";
-import { BILL_CATEGORIES, type BillCategory } from "@/lib/db/schema";
-import type { Bill } from "./BillsManager";
+import { BILL_CATEGORIES } from "@/lib/db/schema";
+import { CATEGORY_CONFIG, type SpendingCategory } from "@/lib/categories";
+import { formatDateBR } from "@/lib/month";
+import type { MonthSpending, SpendingLine } from "@/lib/month-spending";
 
-const CATEGORY_CONFIG: Record<
-  BillCategory,
-  { label: string; emoji: string }
-> = {
-  moradia:      { label: "Moradia",      emoji: "🏠" },
-  transporte:   { label: "Transporte",   emoji: "🚗" },
-  saude:        { label: "Saúde",        emoji: "❤️" },
-  lazer:        { label: "Lazer",        emoji: "🎉" },
-  investimentos:{ label: "Investimentos",emoji: "📈" },
-  alimentação:  { label: "Alimentação",  emoji: "🍽️" },
-  cartão:       { label: "Cartão",       emoji: "💳" },
-  assinaturas:  { label: "Assinaturas",  emoji: "📺" },
-  vestuário:    { label: "Vestuário",    emoji: "👗" },
-  beleza:       { label: "Beleza",       emoji: "💄" },
-  dívidas:      { label: "Dívidas",      emoji: "💸" },
-  outros:       { label: "Outros",       emoji: "📦" },
-};
+type BillCategory = SpendingCategory;
 
 interface CategoryBudget {
   id: number;
@@ -39,17 +25,21 @@ interface CategorySummary {
 }
 
 interface Props {
-  bills: Bill[];
   month: number;
   year: number;
+  /** Muda quando contas/compras mudam, para recarregar o gasto do mês. */
+  refreshKey?: string | number;
+  defaultExpanded?: boolean;
 }
 
 const BRL = (v: number) =>
   `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
-export default function CategoryBudgets({ bills, month, year }: Readonly<Props>) {
+export default function CategoryBudgets({ month, year, refreshKey, defaultExpanded = false }: Readonly<Props>) {
   const [budgets, setBudgets] = useState<CategoryBudget[]>([]);
-  const [expanded, setExpanded] = useState(false);
+  const [spending, setSpending] = useState<MonthSpending | null>(null);
+  const [openCategory, setOpenCategory] = useState<BillCategory | null>(null);
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const [editing, setEditing] = useState(false);
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -65,13 +55,17 @@ export default function CategoryBudgets({ bills, month, year }: Readonly<Props>)
     fetchBudgets();
   }, [fetchBudgets]);
 
-  // Calcula gasto real por categoria a partir das bills recebidas
-  const spentByCategory = BILL_CATEGORIES.reduce<Record<string, number>>((acc, cat) => {
-    acc[cat] = bills
-      .filter((b) => b.category === cat)
-      .reduce((s, b) => s + b.amount, 0);
-    return acc;
-  }, {});
+  // Gasto real do mês: contas + compras do cartão por categoria + cartões alimentação
+  useEffect(() => {
+    fetch(`/api/month-spending?month=${month}&year=${year}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setSpending)
+      .catch(() => setSpending(null));
+  }, [month, year, refreshKey]);
+
+  const spentByCategory: Partial<Record<string, number>> = spending?.byCategory ?? {};
+  const linesOf = (cat: BillCategory): SpendingLine[] =>
+    (spending?.lines ?? []).filter((l) => l.category === cat).sort((a, b) => b.amount - a.amount);
 
   // Monta sumário apenas para categorias com gasto OU com limite definido
   const summaries: CategorySummary[] = BILL_CATEGORIES.map((cat) => {
@@ -134,18 +128,18 @@ export default function CategoryBudgets({ bills, month, year }: Readonly<Props>)
         >
           <h3
             className="text-sm font-black uppercase tracking-wide"
-            style={{ fontFamily: "var(--font-display)", color: "#d6e4dd" }}
+            style={{ fontFamily: "var(--font-display)", color: "rgb(var(--text))" }}
           >
             Limites por categoria
           </h3>
           <ChevronDown
             size={14}
             className={`transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
-            color="#9db3a8"
+            color="rgb(var(--text-soft))"
           />
         </button>
         <div>
-          <p className="text-xs mt-0.5 text-right" style={{ color: "#7b9488" }}>
+          <p className="text-xs mt-0.5 text-right" style={{ color: "rgb(var(--text-muted))" }}>
             Acompanhe seus gastos por área
           </p>
         </div>
@@ -154,9 +148,9 @@ export default function CategoryBudgets({ bills, month, year }: Readonly<Props>)
           disabled={saving}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
           style={{
-            background: editing ? "#4f5f56" : "#1f2522",
-            color: "#d6e4dd",
-            border: "1px solid #313a36",
+            background: editing ? "rgb(var(--text-muted))" : "rgb(var(--surface-raised))",
+            color: "rgb(var(--text))",
+            border: "1px solid rgb(var(--border))",
           }}
         >
           <Settings2 size={13} />
@@ -175,7 +169,7 @@ export default function CategoryBudgets({ bills, month, year }: Readonly<Props>)
               <div key={cat}>
                 <label
                   className="block text-[10px] font-semibold mb-1 uppercase tracking-wide"
-                  style={{ color: "#a8bbb1" }}
+                  style={{ color: "rgb(var(--text-soft))" }}
                 >
                   {cfg.emoji} {cfg.label}
                 </label>
@@ -195,7 +189,7 @@ export default function CategoryBudgets({ bills, month, year }: Readonly<Props>)
             <button
               onClick={() => setEditing(false)}
               className="text-xs px-3 py-1.5 rounded-lg"
-              style={{ color: "#a8bbb1", background: "#1f2522", border: "1px solid #313a36" }}
+              style={{ color: "rgb(var(--text-soft))", background: "rgb(var(--surface-raised))", border: "1px solid rgb(var(--border))" }}
             >
               Cancelar
             </button>
@@ -210,28 +204,33 @@ export default function CategoryBudgets({ bills, month, year }: Readonly<Props>)
             const cfg = CATEGORY_CONFIG[category];
             const barColor =
               status === "over"
-                ? "#ef4444"
+                ? "rgb(var(--negative))"
                 : status === "warning"
-                ? "#f59e0b"
-                : "#5b7468";
+                ? "rgb(var(--warning))"
+                : "rgb(var(--text-muted))";
 
             return (
               <div key={category} className="space-y-1.5">
-                {/* Label row */}
-                <div className="flex items-center justify-between">
+                {/* Label row — toque abre as transações da categoria */}
+                <button
+                  type="button"
+                  onClick={() => setOpenCategory((prev) => (prev === category ? null : category))}
+                  aria-expanded={openCategory === category}
+                  className="w-full flex items-center justify-between text-left"
+                >
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm">{cfg.emoji}</span>
                     <span
                       className="text-xs font-semibold"
-                      style={{ color: "#d6e4dd" }}
+                      style={{ color: "rgb(var(--text))" }}
                     >
                       {cfg.label}
                     </span>
                     {status === "over" && (
-                      <AlertTriangle size={11} color="#ef4444" />
+                      <AlertTriangle size={11} color="rgb(var(--negative))" />
                     )}
                     {status === "warning" && (
-                      <TrendingUp size={11} color="#f59e0b" />
+                      <TrendingUp size={11} color="rgb(var(--warning))" />
                     )}
                   </div>
                   <div className="text-right">
@@ -240,33 +239,33 @@ export default function CategoryBudgets({ bills, month, year }: Readonly<Props>)
                       style={{
                         color:
                           status === "over"
-                            ? "#ef4444"
+                            ? "rgb(var(--negative))"
                             : status === "warning"
-                            ? "#f59e0b"
-                            : "#f0f9f4",
+                            ? "rgb(var(--warning))"
+                            : "rgb(var(--text))",
                       }}
                     >
                       {BRL(spent)}
                     </span>
                     {budget !== null && (
-                      <span className="text-xs ml-1" style={{ color: "#4a6b58" }}>
+                      <span className="text-xs ml-1" style={{ color: "rgb(var(--text-muted))" }}>
                         / {BRL(budget)}
                       </span>
                     )}
                   </div>
-                </div>
+                </button>
 
                 {/* Progress bar */}
                 {budget === null ? (
                   // Sem limite definido: barra cinza com traço
                   <div
                     className="h-1.5 rounded-full"
-                    style={{ background: "#2a3d31", opacity: 0.4 }}
+                    style={{ background: "rgb(var(--border))", opacity: 0.4 }}
                   />
                 ) : (
                   <div
                     className="h-1.5 rounded-full overflow-hidden"
-                    style={{ background: "#2a3d31" }}
+                    style={{ background: "rgb(var(--border))" }}
                   >
                     <div
                       className="h-full rounded-full transition-all duration-500"
@@ -281,15 +280,55 @@ export default function CategoryBudgets({ bills, month, year }: Readonly<Props>)
 
                 {/* Status message */}
                 {status === "over" && budget !== null && (
-                  <p className="text-[10px]" style={{ color: "#ef4444" }}>
+                  <p className="text-[10px]" style={{ color: "rgb(var(--negative))" }}>
                     Ultrapassou {BRL(spent - budget)} acima do limite
                   </p>
                 )}
                 {status === "warning" && budget !== null && (
-                  <p className="text-[10px]" style={{ color: "#f59e0b" }}>
+                  <p className="text-[10px]" style={{ color: "rgb(var(--warning))" }}>
                     {Math.round(percent)}% do limite — restam {BRL(budget - spent)}
                   </p>
                 )}
+
+                {(() => {
+                  // Cada conta da categoria à vista: estourou o limite → todas; senão as 3 maiores.
+                  const lines = linesOf(category);
+                  const showAll = status === "over" || openCategory === category;
+                  const shown = showAll ? lines : lines.slice(0, 3);
+                  if (lines.length === 0) return null;
+                  return (
+                    <ul
+                      className="mt-1 rounded-lg divide-y divide-line"
+                      style={{
+                        background: "rgb(var(--surface-raised))",
+                        border: status === "over" ? "1px solid rgb(var(--negative) / 0.35)" : undefined,
+                      }}
+                    >
+                      {shown.map((l, i) => (
+                        <li key={`${l.source}-${i}`} className="flex items-center gap-2 px-3 py-1.5 text-xs">
+                          <span className="flex-1 min-w-0 truncate">{l.name}</span>
+                          <span className="flex-shrink-0" style={{ color: "rgb(var(--text-muted))" }}>
+                            {l.source === "conta" ? "conta" : l.origin ?? l.source}
+                            {l.date ? ` · ${formatDateBR(l.date).slice(0, 5)}` : ""}
+                          </span>
+                          <span className="font-numeric flex-shrink-0">{BRL(l.amount)}</span>
+                        </li>
+                      ))}
+                      {!showAll && lines.length > 3 && (
+                        <li>
+                          <button
+                            type="button"
+                            onClick={() => setOpenCategory(category)}
+                            className="w-full px-3 py-1.5 text-[11px] font-semibold text-left"
+                            style={{ color: "rgb(var(--accent))" }}
+                          >
+                            ver todas ({lines.length})
+                          </button>
+                        </li>
+                      )}
+                    </ul>
+                  );
+                })()}
               </div>
             );
           })}
@@ -298,8 +337,8 @@ export default function CategoryBudgets({ bills, month, year }: Readonly<Props>)
 
       {/* Sem dados ainda */}
       {!editing && summaries.length === 0 && (
-        <p className="text-xs text-center py-2" style={{ color: "#4a6b58" }}>
-          Adicione contas com categoria para ver os limites.
+        <p className="text-xs text-center py-2" style={{ color: "rgb(var(--text-muted))" }}>
+          Lance contas, compras no cartão ou no cartão alimentação para ver os gastos por categoria.
         </p>
       )}
         </>

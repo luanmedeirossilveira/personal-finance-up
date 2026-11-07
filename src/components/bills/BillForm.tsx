@@ -1,22 +1,11 @@
 // src/components/bills/BillForm.tsx
-import { useState } from "react";
-import { Bill } from "./BillsManager";
+import { useEffect, useState } from "react";
+import type { Bill } from "@/components/month/types";
 import { Check, CreditCard, Receipt } from "lucide-react";
 import type { BillOwnership } from "@/lib/db/schema";
 import ModalPortal from "@/components/ui/ModalPortal";
+import { BILL_FORM_CATEGORIES, categoryLabel } from "@/lib/categories";
 
-const CATEGORIES = [
-  "moradia",
-  "transporte",
-  "saude",
-  "lazer",
-  "investimentos",
-  "alimentação",
-  "vestuário",
-  "beleza",
-  "dívidas",
-  "outros",
-];
 
 // v2: rótulos e cores de ownership
 const OWNERSHIP_OPTIONS: {
@@ -31,24 +20,24 @@ const OWNERSHIP_OPTIONS: {
     value: "mine",
     label: "Minha",
     emoji: "🧑",
-    color: "#93c5fd",
-    bg: "#1e2d3d",
+    color: "rgb(var(--owner-mine))",
+    bg: "rgb(var(--owner-mine-bg))",
     activeBg: "#1d4ed8",
   },
   {
     value: "joint",
     label: "Conjunta",
     emoji: "🤝",
-    color: "#86efac",
-    bg: "#1c2b22",
-    activeBg: "#389671",
+    color: "rgb(var(--owner-joint))",
+    bg: "rgb(var(--surface-raised))",
+    activeBg: "rgb(var(--accent-strong))",
   },
   {
     value: "hers",
     label: "Dela",
     emoji: "👩",
-    color: "#f9a8d4",
-    bg: "#2d1f2a",
+    color: "rgb(var(--owner-hers))",
+    bg: "rgb(var(--owner-hers-bg))",
     activeBg: "#be185d",
   },
 ];
@@ -85,10 +74,43 @@ export default function BillForm({
   const [cardNickname, setCardNickname] = useState(bill?.cardNickname || "");
   const [date, setDate] = useState(bill?.date || "");
   const [saving, setSaving] = useState(false);
+  // v3: sem o valor exato, a conta vira uma Futura (lembrete) até ser confirmada.
+  const [estimateOnly, setEstimateOnly] = useState(false);
+  // v3: aporte vinculado a um investimento — ao pagar, soma no aplicado.
+  const [investmentId, setInvestmentId] = useState<string>(bill?.investmentId ? String(bill.investmentId) : "");
+  const [investments, setInvestments] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    if (category !== "investimentos" || investments.length > 0) return;
+    fetch("/api/accounts")
+      .then((r) => (r.ok ? r.json() : { investments: [] }))
+      .then((d) => setInvestments((d.investments ?? []).map((i: { id: number; name: string }) => ({ id: i.id, name: i.name }))))
+      .catch(() => setInvestments([]));
+  }, [category, investments.length]);
+  const canBeFuture = !bill && type === "NORMAL";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+
+    if (canBeFuture && estimateOnly) {
+      const day = dueDay ? Math.min(Math.max(parseInt(dueDay), 1), 28) : 1;
+      const reminderDate = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const parsed = parseFloat(amount.replace(",", "."));
+      await fetch("/api/future-bills", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim().toUpperCase(),
+          amount: Number.isFinite(parsed) ? parsed : null,
+          reminderDate,
+          notes: notes || null,
+        }),
+      });
+      setSaving(false);
+      onSave();
+      return;
+    }
 
     const payload: any = {
       name: name.trim().toUpperCase(),
@@ -107,6 +129,7 @@ export default function BillForm({
       cardLast4: type === "CARD" ? cardLast4 : null,
       cardNickname: type === "CARD" ? cardNickname : null,
       date: date || null,
+      investmentId: type === "NORMAL" && category === "investimentos" && investmentId ? Number(investmentId) : null,
     };
 
     if (bill) {
@@ -157,9 +180,9 @@ export default function BillForm({
                 type === "NORMAL" ? "ring-2 ring-offset-1" : ""
               }`}
               style={{
-                background: type === "NORMAL" ? "#389671" : "#1c2b22",
-                color: type === "NORMAL" ? "#fff" : "#8dcdb0",
-                borderColor: "#2a3d31",
+                background: type === "NORMAL" ? "rgb(var(--accent-strong))" : "rgb(var(--surface-raised))",
+                color: type === "NORMAL" ? "rgb(var(--on-accent))" : "rgb(var(--text-soft))",
+                borderColor: "rgb(var(--border))",
               }}
             >
               <Receipt size={16} />
@@ -172,9 +195,9 @@ export default function BillForm({
                 type === "CARD" ? "ring-2 ring-offset-1" : ""
               }`}
               style={{
-                background: type === "CARD" ? "#389671" : "#1c2b22",
-                color: type === "CARD" ? "#fff" : "#8dcdb0",
-                borderColor: "#2a3d31",
+                background: type === "CARD" ? "rgb(var(--accent-strong))" : "rgb(var(--surface-raised))",
+                color: type === "CARD" ? "rgb(var(--on-accent))" : "rgb(var(--text-soft))",
+                borderColor: "rgb(var(--border))",
               }}
             >
               <CreditCard size={16} />
@@ -186,7 +209,7 @@ export default function BillForm({
           <div>
             <label
               className="block text-xs font-medium mb-2 uppercase tracking-wide"
-              style={{ color: "#8dcdb0" }}
+              style={{ color: "rgb(var(--text-soft))" }}
             >
               De quem é essa conta?
             </label>
@@ -199,12 +222,12 @@ export default function BillForm({
                     type="button"
                     onClick={() => setOwnership(opt.value)}
                     className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                      isActive ? "ring-2 ring-white/20" : ""
+                      isActive ? "ring-2 ring-fg/20" : ""
                     }`}
                     style={{
                       background: isActive ? opt.activeBg : opt.bg,
-                      color: isActive ? "#fff" : opt.color,
-                      border: `1px solid ${isActive ? opt.activeBg : "#2a3d31"}`,
+                      color: isActive ? "rgb(var(--on-accent))" : opt.color,
+                      border: `1px solid ${isActive ? opt.activeBg : "rgb(var(--border))"}`,
                     }}
                   >
                     <span className="text-base leading-none">{opt.emoji}</span>
@@ -222,7 +245,7 @@ export default function BillForm({
                 <div>
                   <label
                     className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
-                    style={{ color: "#8dcdb0" }}
+                    style={{ color: "rgb(var(--text-soft))" }}
                   >
                     Últimos 4 dígitos
                   </label>
@@ -241,7 +264,7 @@ export default function BillForm({
                 <div>
                   <label
                     className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
-                    style={{ color: "#8dcdb0" }}
+                    style={{ color: "rgb(var(--text-soft))" }}
                   >
                     Apelido
                   </label>
@@ -258,7 +281,7 @@ export default function BillForm({
             <div className={type === "CARD" ? "col-span-2" : "col-span-2"}>
               <label
                 className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
-                style={{ color: "#8dcdb0" }}
+                style={{ color: "rgb(var(--text-soft))" }}
               >
                 {type === "CARD" ? "Nome da fatura *" : "Nome *"}
               </label>
@@ -275,22 +298,22 @@ export default function BillForm({
             <div>
               <label
                 className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
-                style={{ color: "#8dcdb0" }}
+                style={{ color: "rgb(var(--text-soft))" }}
               >
-                {type === "CARD" ? "Valor total *" : "Valor *"}
+                {type === "CARD" ? "Valor total *" : estimateOnly ? "Valor estimado" : "Valor *"}
               </label>
               <input
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="input-base"
                 placeholder="440,00"
-                required
+                required={!(canBeFuture && estimateOnly)}
               />
             </div>
             <div>
               <label
                 className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
-                style={{ color: "#8dcdb0" }}
+                style={{ color: "rgb(var(--text-soft))" }}
               >
                 Vencimento (dia)
               </label>
@@ -307,7 +330,7 @@ export default function BillForm({
             <div>
               <label
                 className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
-                style={{ color: "#8dcdb0" }}
+                style={{ color: "rgb(var(--text-soft))" }}
               >
                 Parcela
               </label>
@@ -321,7 +344,7 @@ export default function BillForm({
             <div>
               <label
                 className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
-                style={{ color: "#8dcdb0" }}
+                style={{ color: "rgb(var(--text-soft))" }}
               >
                 Data de pagamento
               </label>
@@ -336,7 +359,7 @@ export default function BillForm({
               <div>
                 <label
                   className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
-                  style={{ color: "#8dcdb0" }}
+                  style={{ color: "rgb(var(--text-soft))" }}
                 >
                   Categoria
                 </label>
@@ -346,9 +369,27 @@ export default function BillForm({
                   className="input-base relative z-[70]"
                 >
                   <option value="">Selecionar...</option>
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c} style={{ background: "#1c2b22" }}>
-                      {c.charAt(0).toUpperCase() + c.slice(1)}
+                  {BILL_FORM_CATEGORIES.map((c) => (
+                    <option key={c} value={c} style={{ background: "rgb(var(--surface-raised))" }}>
+                      {categoryLabel(c)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {type === "NORMAL" && category === "investimentos" && investments.length > 0 && (
+              <div className="col-span-2">
+                <label
+                  className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
+                  style={{ color: "rgb(var(--text-soft))" }}
+                >
+                  Aporte em
+                </label>
+                <select value={investmentId} onChange={(e) => setInvestmentId(e.target.value)} className="input-base">
+                  <option value="">Nenhum investimento</option>
+                  {investments.map((i) => (
+                    <option key={i.id} value={i.id} style={{ background: "rgb(var(--surface-raised))" }}>
+                      {i.name}
                     </option>
                   ))}
                 </select>
@@ -357,7 +398,7 @@ export default function BillForm({
             <div className="col-span-2">
               <label
                 className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
-                style={{ color: "#8dcdb0" }}
+                style={{ color: "rgb(var(--text-soft))" }}
               >
                 Observações
               </label>
@@ -373,7 +414,7 @@ export default function BillForm({
                 <div className="col-span-2">
                   <label
                     className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
-                    style={{ color: "#8dcdb0" }}
+                    style={{ color: "rgb(var(--text-soft))" }}
                   >
                     Código de barras
                   </label>
@@ -387,7 +428,7 @@ export default function BillForm({
                 <div className="col-span-2">
                   <label
                     className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
-                    style={{ color: "#8dcdb0" }}
+                    style={{ color: "rgb(var(--text-soft))" }}
                   >
                     QR Code
                   </label>
@@ -402,21 +443,47 @@ export default function BillForm({
             )}
           </div>
 
+          {canBeFuture && (
+            <label className="flex items-center justify-between gap-3 cursor-pointer py-1">
+              <span className="text-sm" style={{ color: "rgb(var(--text-soft))" }}>
+                Ainda não tenho o valor exato
+                <span className="block text-xs" style={{ color: "rgb(var(--text-muted))" }}>
+                  Fica como previsto no mês até virar conta
+                </span>
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={estimateOnly}
+                onClick={() => setEstimateOnly((v) => !v)}
+                className="relative w-10 h-6 rounded-full transition-colors flex-shrink-0"
+                style={{ background: estimateOnly ? "rgb(var(--accent-strong))" : "rgb(var(--border))" }}
+              >
+                <span
+                  className="absolute top-1 w-4 h-4 rounded-full transition-all"
+                  style={{ left: estimateOnly ? 20 : 4, background: "rgb(var(--on-accent))" }}
+                />
+              </button>
+            </label>
+          )}
+
+          {!(canBeFuture && estimateOnly) && (
           <label className="flex items-center gap-3 cursor-pointer">
             <div
               className="w-5 h-5 rounded border-2 flex items-center justify-center transition-all"
               style={{
-                borderColor: isPaid ? "#389671" : "#2a3d31",
-                background: isPaid ? "#389671" : "transparent",
+                borderColor: isPaid ? "rgb(var(--accent-strong))" : "rgb(var(--border))",
+                background: isPaid ? "rgb(var(--accent-strong))" : "transparent",
               }}
               onClick={() => setIsPaid(!isPaid)}
             >
-              {isPaid && <Check size={12} strokeWidth={3} color="#fff" />}
+              {isPaid && <Check size={12} strokeWidth={3} color="rgb(var(--on-accent))" />}
             </div>
-            <span className="text-sm" style={{ color: "#8dcdb0" }}>
+            <span className="text-sm" style={{ color: "rgb(var(--text-soft))" }}>
               Marcar como pago
             </span>
           </label>
+          )}
 
           <div className="flex gap-3 pt-2">
             <button
@@ -424,9 +491,9 @@ export default function BillForm({
               onClick={onClose}
               className="flex-1 py-3 rounded-xl text-sm font-semibold"
               style={{
-                background: "#1c2b22",
-                color: "#8dcdb0",
-                border: "1px solid #2a3d31",
+                background: "rgb(var(--surface-raised))",
+                color: "rgb(var(--text-soft))",
+                border: "1px solid rgb(var(--border))",
               }}
             >
               Cancelar
@@ -435,9 +502,9 @@ export default function BillForm({
               type="submit"
               disabled={saving}
               className="flex-1 py-3 rounded-xl text-sm font-semibold"
-              style={{ background: "#389671", color: "#fff" }}
+              style={{ background: "rgb(var(--accent-strong))", color: "rgb(var(--on-accent))" }}
             >
-              {saving ? "Salvando..." : bill ? "Salvar" : "Adicionar"}
+              {saving ? "Salvando..." : bill ? "Salvar" : estimateOnly && canBeFuture ? "Prever" : "Adicionar"}
             </button>
           </div>
           </div>

@@ -70,7 +70,7 @@ export default function MealCardForm({
           className="card rounded-t-2xl sm:rounded-2xl p-6 space-y-4 w-full sm:max-w-md max-h-[90vh] overflow-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          <h4 className="text-sm font-bold" style={{ color: "#f0f9f4" }}>
+          <h4 className="text-sm font-bold" style={{ color: "rgb(var(--text))" }}>
             {card ? "Editar cartão" : "Novo cartão alimentação"}
           </h4>
 
@@ -78,14 +78,14 @@ export default function MealCardForm({
             <div>
               <label
                 className="block text-xs font-medium mb-1 uppercase tracking-wide"
-                style={{ color: "#8dcdb0" }}
+                style={{ color: "rgb(var(--text-soft))" }}
               >
                 Nome do cartão *
               </label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
                 placeholder="Alelo, Sodexo, VR..."
                 required
               />
@@ -94,7 +94,7 @@ export default function MealCardForm({
             <div>
               <label
                 className="block text-xs font-medium mb-1 uppercase tracking-wide"
-                style={{ color: "#8dcdb0" }}
+                style={{ color: "rgb(var(--text-soft))" }}
               >
                 Limite do mês
               </label>
@@ -102,7 +102,7 @@ export default function MealCardForm({
                 value={limitAmount}
                 onChange={(e) => setLimitAmount(e.target.value)}
                 inputMode="decimal"
-                className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
                 placeholder="800,00"
               />
             </div>
@@ -110,7 +110,7 @@ export default function MealCardForm({
             <div>
               <label
                 className="block text-xs font-medium mb-2 uppercase tracking-wide"
-                style={{ color: "#8dcdb0" }}
+                style={{ color: "rgb(var(--text-soft))" }}
               >
                 Cor
               </label>
@@ -123,7 +123,7 @@ export default function MealCardForm({
                     className="w-7 h-7 rounded-full transition-transform active:scale-90"
                     style={{
                       background: c,
-                      outline: color === c ? "2px solid #f0f9f4" : "none",
+                      outline: color === c ? "2px solid rgb(var(--text))" : "none",
                       outlineOffset: "2px",
                     }}
                     aria-label={`Cor ${c}`}
@@ -138,7 +138,7 @@ export default function MealCardForm({
               type="button"
               onClick={onClose}
               className="px-3 py-2 rounded text-sm"
-              style={{ background: "#1c2b22", border: "1px solid #2a3d31", color: "#8dcdb0" }}
+              style={{ background: "rgb(var(--surface-raised))", border: "1px solid rgb(var(--border))", color: "rgb(var(--text-soft))" }}
             >
               Cancelar
             </button>
@@ -146,7 +146,7 @@ export default function MealCardForm({
               type="submit"
               disabled={saving}
               className="px-3 py-2 rounded text-sm font-semibold"
-              style={{ background: "#389671", color: "#fff" }}
+              style={{ background: "rgb(var(--accent-strong))", color: "rgb(var(--on-accent))" }}
             >
               {saving ? "Salvando..." : card ? "Salvar" : "Adicionar"}
             </button>

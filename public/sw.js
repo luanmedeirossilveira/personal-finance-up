@@ -1,8 +1,9 @@
-const CACHE_NAME = 'contas-cotidiano-v1';
+// v2: nova logo e rotas da v3 (Hoje/Mês). Trocar o nome do cache descarta o cache antigo no activate.
+const CACHE_NAME = 'contas-cotidiano-v2';
 const STATIC_ASSETS = [
-  '/',
-  '/dashboard',
-  '/contas',
+  '/manifest.json',
+  '/icons/android-chrome-192x192.png',
+  '/icons/favicon-32x32.png',
 ];
 
 self.addEventListener('install', (event) => {

@@ -1,5 +1,8 @@
 import type { Config } from "tailwindcss";
 
+// Cores mapeadas para os tokens CSS de globals.css (dark/light).
+const token = (name: string) => `rgb(var(--${name}) / <alpha-value>)`;
+
 const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -13,25 +16,25 @@ const config: Config = {
         body: ["var(--font-body)"],
       },
       colors: {
-        brand: {
-          50: "#f0f9f4",
-          100: "#dcf1e6",
-          200: "#bbe3ce",
-          300: "#8dcdb0",
-          400: "#5ab28d",
-          500: "#389671",
-          600: "#29785b",
-          700: "#22604a",
-          800: "#1e4d3c",
-          900: "#1a4032",
-          950: "#0d231c",
-        },
+        bg: token("bg"),
         surface: {
-          DEFAULT: "#0f1a16",
-          card: "#162019",
-          elevated: "#1c2b22",
-          border: "#2a3d31",
+          DEFAULT: token("surface"),
+          raised: token("surface-raised"),
         },
+        line: token("border"),
+        fg: {
+          DEFAULT: token("text"),
+          soft: token("text-soft"),
+          muted: token("text-muted"),
+        },
+        accent: {
+          DEFAULT: token("accent"),
+          strong: token("accent-strong"),
+          bg: token("accent-bg"),
+        },
+        positive: token("accent"),
+        warning: token("warning"),
+        negative: token("negative"),
       },
     },
   },

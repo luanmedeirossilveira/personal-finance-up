@@ -24,7 +24,7 @@ function emailWrapper(content: string) {
     </div>
     ${content}
     <div style="margin-top:32px;border-top:1px solid #2a3d31;padding-top:16px;">
-      <a href="${process.env.NEXTAUTH_URL}/dashboard"
+      <a href="${process.env.NEXTAUTH_URL}/hoje"
          style="display:inline-block;background:#389671;color:#fff;text-decoration:none;
                 padding:12px 28px;border-radius:10px;font-weight:600;font-size:14px;">
         Abrir dashboard →
@@ -161,14 +161,39 @@ export async function sendFutureBillReminder(
   });
 }
 
-export async function sendInsightsEmail(email: string, bodyText: string): Promise<void> {
+// v3: "Radar da semana" — frase-resumo, os 3 insights e o botão que abre a Revisão.
+const INSIGHT_TONE: Record<string, string> = { positive: "#5ab28d", warning: "#f59e0b", negative: "#ef4444" };
+
+export async function sendInsightsEmail(
+  email: string,
+  radar: {
+    summary: string;
+    insights: Array<{ title: string; message: string; action: string | null; tone: string }>;
+  },
+): Promise<void> {
+  const items = radar.insights
+    .map(
+      (i) => `
+      <div style="border-left:3px solid ${INSIGHT_TONE[i.tone] ?? "#8dcdb0"};background:#1c2b22;border-radius:8px;
+                  padding:14px 16px;margin-bottom:12px;">
+        <div style="color:#f0f9f4;font-weight:600;font-size:14px;margin-bottom:6px;">${i.title}</div>
+        <div style="color:#8dcdb0;font-size:13px;line-height:1.6;">${i.message}</div>
+        ${i.action ? `<div style="color:#f0f9f4;font-size:13px;margin-top:8px;">→ ${i.action}</div>` : ""}
+      </div>`,
+    )
+    .join("");
+
   await resend.emails.send({
-    from: FROM, to: email,
-    subject: `💡 Radar Financeiro Semanal — Contas Cotidiano`,
+    from: FROM,
+    to: email,
+    subject: `💡 Radar da semana — Contas Cotidiano`,
     html: emailWrapper(`
-      <div style="color:#4a6b58;font-size:12px;margin-bottom:18px;">Radar Financeiro Semanal</div>
-      <div style="color:#f0f9f4;font-size:14px;line-height:1.6;">${bodyText.replace(/\n/g, "<br/>")}</div>
-      <div style="margin-top:18px;color:#4a6b58;font-size:13px;">Próximo radar: sábado que vem 💚</div>
+      <div style="color:#4a6b58;font-size:12px;margin-bottom:8px;">Radar da semana</div>
+      <h2 style="color:#f0f9f4;font-size:18px;line-height:1.4;margin:0 0 20px;">${radar.summary}</h2>
+      ${items || `<p style="color:#8dcdb0;font-size:13px;">Nada fora do normal esta semana.</p>`}
+      <a href="${process.env.NEXTAUTH_URL}/revisao"
+         style="display:inline-block;background:#389671;color:#fff;text-decoration:none;
+                padding:12px 26px;border-radius:10px;font-weight:600;margin-top:8px;">Fazer a Revisão</a>
     `),
   });
 }

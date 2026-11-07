@@ -1,12 +1,118 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Tokens de cor (v3). Valores em canais RGB para permitir opacidade:
+ *   style={{ color: "rgb(var(--text))" }}
+ *   style={{ background: "rgb(var(--accent-strong) / 0.15)" }}
+ *   className="text-fg bg-surface-raised/50"
+ *
+ * Tema: segue o sistema por padrão; `data-theme="light" | "dark"` no <html> força um dos dois.
+ * O verde ficou só como acento (positivo, pago, dentro do limite); superfícies são grafite neutro.
+ */
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: 242 243 246;
+  --surface: 255 255 255;
+  --surface-raised: 247 248 250;
+  --border: 224 227 233;
+  --text: 22 25 31;
+  --text-soft: 62 69 82;
+  --text-muted: 107 114 128;
+  --accent: 26 133 94;
+  --accent-strong: 31 138 99;
+  --accent-bg: 220 242 232;
+  --on-accent: 255 255 255;
+  --warning: 196 120 6;
+  --warning-soft: 168 104 8;
+  --warning-bg: 254 243 220;
+  --warning-border: 240 200 130;
+  --negative: 214 48 49;
+  --negative-soft: 200 55 55;
+  --negative-bg: 253 232 232;
+  --negative-border: 240 170 170;
+  --violet: 126 58 200;
+  --owner-mine: 29 99 196;
+  --owner-mine-bg: 225 236 252;
+  --owner-joint: 22 128 70;
+  --owner-joint-bg: 222 244 230;
+  --owner-hers: 190 40 120;
+  --owner-hers-bg: 252 228 241;
+  --shadow: 0 1px 2px rgb(16 24 40 / 0.05), 0 4px 16px rgb(16 24 40 / 0.06);
+  --highlight: 255 255 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: 27 30 35;
+    --surface: 35 39 45;
+    --surface-raised: 43 48 55;
+    --border: 54 59 67;
+    --text: 238 240 243;
+    --text-soft: 184 190 199;
+    --text-muted: 128 135 146;
+    --accent: 84 190 146;
+    --accent-strong: 47 150 112;
+    --accent-bg: 30 56 46;
+    --on-accent: 255 255 255;
+    --warning: 242 179 76;
+    --warning-soft: 252 211 77;
+    --warning-bg: 52 42 24;
+    --warning-border: 120 85 30;
+    --negative: 240 100 106;
+    --negative-soft: 248 133 133;
+    --negative-bg: 56 32 34;
+    --negative-border: 127 40 44;
+    --violet: 192 132 252;
+    --owner-mine: 147 197 253;
+    --owner-mine-bg: 32 44 62;
+    --owner-joint: 134 239 172;
+    --owner-joint-bg: 30 50 40;
+    --owner-hers: 249 168 212;
+    --owner-hers-bg: 52 34 46;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.25);
+    --highlight: 255 255 255;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: 27 30 35;
+  --surface: 35 39 45;
+  --surface-raised: 43 48 55;
+  --border: 54 59 67;
+  --text: 238 240 243;
+  --text-soft: 184 190 199;
+  --text-muted: 128 135 146;
+  --accent: 84 190 146;
+  --accent-strong: 47 150 112;
+  --accent-bg: 30 56 46;
+  --on-accent: 255 255 255;
+  --warning: 242 179 76;
+  --warning-soft: 252 211 77;
+  --warning-bg: 52 42 24;
+  --warning-border: 120 85 30;
+  --negative: 240 100 106;
+  --negative-soft: 248 133 133;
+  --negative-bg: 56 32 34;
+  --negative-border: 127 40 44;
+  --violet: 192 132 252;
+  --owner-mine: 147 197 253;
+  --owner-mine-bg: 32 44 62;
+  --owner-joint: 134 239 172;
+  --owner-joint-bg: 30 50 40;
+  --owner-hers: 249 168 212;
+  --owner-hers-bg: 52 34 46;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.25);
+  --highlight: 255 255 255;
+}
+
 :root {
-  --font-display: 'Syne', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
+  --font-display: var(--font-manrope), system-ui, sans-serif;
+  --font-body: var(--font-manrope), system-ui, sans-serif;
 }
 
 * {
@@ -18,17 +124,17 @@ html {
 }
 
 body {
-  background: #0f1a16;
-  color: #f0f9f4;
+  background: rgb(var(--bg));
+  color: rgb(var(--text));
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0f1a16; }
-::-webkit-scrollbar-thumb { background: #2a3d31; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #389671; }
+::-webkit-scrollbar-track { background: rgb(var(--bg)); }
+::-webkit-scrollbar-thumb { background: rgb(var(--border)); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--accent-strong)); }
 
 /* Animations */
 @keyframes fadeIn {
@@ -45,8 +151,8 @@ body {
 }
 
 @keyframes pulse-green {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(56, 150, 113, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(56, 150, 113, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgb(var(--accent-strong) / 0.4); }
+  50% { box-shadow: 0 0 0 8px rgb(var(--accent-strong) / 0); }
 }
 
 .animate-fade-in {
@@ -57,25 +163,32 @@ body {
   animation: slideIn 0.3s ease forwards;
 }
 
-/* Card styles */
+/* Card styles — uma sombra suave + borda de 1px mais clara no topo (sem neumorfismo) */
 .card {
-  background: #162019;
-  border: 1px solid #2a3d31;
-  border-radius: 14px;
+  background: rgb(var(--surface));
+  border: 1px solid rgb(var(--border));
+  border-top-color: rgb(var(--highlight) / 0.06);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+:root[data-theme="light"] .card { border-top-color: rgb(var(--border)); }
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .card { border-top-color: rgb(var(--border)); }
 }
 
 .card-elevated {
-  background: #1c2b22;
-  border: 1px solid #2a3d31;
+  background: rgb(var(--surface-raised));
+  border: 1px solid rgb(var(--border));
   border-radius: 14px;
 }
 
 /* Input styles */
 .input-base {
-  background: #1c2b22;
-  border: 1px solid #2a3d31;
+  background: rgb(var(--surface-raised));
+  border: 1px solid rgb(var(--border));
   border-radius: 10px;
-  color: #f0f9f4;
+  color: rgb(var(--text));
   padding: 12px 16px;
   font-family: var(--font-body);
   font-size: 15px;
@@ -85,35 +198,49 @@ body {
 }
 
 .input-base:focus {
-  border-color: #389671;
-  box-shadow: 0 0 0 3px rgba(56, 150, 113, 0.15);
+  border-color: rgb(var(--accent-strong));
+  box-shadow: 0 0 0 3px rgb(var(--accent-strong) / 0.15);
 }
 
 .input-base::placeholder {
-  color: #4a6b58;
+  color: rgb(var(--text-muted));
 }
 
 /* Badge */
 .badge-paid {
-  background: rgba(56, 150, 113, 0.15);
-  color: #5ab28d;
-  border: 1px solid rgba(56, 150, 113, 0.3);
+  background: rgb(var(--accent-strong) / 0.15);
+  color: rgb(var(--accent));
+  border: 1px solid rgb(var(--accent-strong) / 0.3);
 }
 
 .badge-pending {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: rgb(var(--warning) / 0.1);
+  color: rgb(var(--warning));
+  border: 1px solid rgb(var(--warning) / 0.3);
 }
 
 .badge-overdue {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgb(var(--negative) / 0.1);
+  color: rgb(var(--negative));
+  border: 1px solid rgb(var(--negative) / 0.3);
 }
 
-/* Number font */
+/* Number font — números tabulares para colunas de R$ alinharem */
 .font-numeric {
   font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rótulo pequeno sobre número grande */
+.label-sm {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgb(var(--text-muted));
+  font-weight: 600;
 }

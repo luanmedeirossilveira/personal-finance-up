@@ -128,15 +128,9 @@ export function detectRisks(
         title: "Fatura do cartão crescendo mês a mês",
         message: `Faturas de cartão somam ${BRL(currCardTotal)} este mês (+${Math.round(pct)}% vs mês anterior). Uso crescente do cartão pode indicar que as despesas estão ultrapassando a renda corrente.`,
       });
-    } else if (currCardCount >= 2) {
-      // Múltiplos cartões ativos simultaneamente
-      alerts.push({
-        type: "card_recurrence",
-        severity: "warning",
-        title: "Múltiplos cartões em uso",
-        message: `${currCardCount} faturas de cartão registradas este mês (total: ${BRL(currCardTotal)}). Uso recorrente de cartão como principal forma de pagamento pode dificultar o controle do fluxo real.`,
-      });
     }
+    // (v3) "Múltiplos cartões em uso" saiu: cada pessoa tem o seu cartão. O que importa é passar
+    // do limite planejado de cada cartão — ver lib/cards.ts e o fato "card_over_plan".
   } else if (currCardCount > 0 && prevCardCount === 0 && currCardTotal > 0) {
     // Começou a usar cartão este mês
     // Sem alerta — é comportamento normal

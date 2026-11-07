@@ -36,8 +36,8 @@ export function showConfirm(message: string): Promise<boolean> {
 
     const box = document.createElement("div");
     Object.assign(box.style, {
-      background: "#0f1a16",
-      color: "#fff",
+      background: "rgb(var(--bg))",
+      color: "rgb(var(--on-accent))",
       padding: "16px",
       borderRadius: "10px",
       boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
@@ -48,7 +48,7 @@ export function showConfirm(message: string): Promise<boolean> {
 
     const msg = document.createElement("div");
     msg.textContent = message;
-    Object.assign(msg.style, { marginBottom: "12px", color: "#e6f7ef" });
+    Object.assign(msg.style, { marginBottom: "12px", color: "rgb(var(--text))" });
 
     const actions = document.createElement("div");
     Object.assign(actions.style, { display: "flex", gap: "8px", justifyContent: "flex-end" });
@@ -56,8 +56,8 @@ export function showConfirm(message: string): Promise<boolean> {
     const btnCancel = document.createElement("button");
     btnCancel.textContent = "Cancelar";
     Object.assign(btnCancel.style, {
-      background: "#1c2b22",
-      color: "#8dcdb0",
+      background: "rgb(var(--surface-raised))",
+      color: "rgb(var(--text-soft))",
       border: "none",
       padding: "8px 12px",
       borderRadius: "8px",
@@ -67,8 +67,8 @@ export function showConfirm(message: string): Promise<boolean> {
     const btnOk = document.createElement("button");
     btnOk.textContent = "Remover";
     Object.assign(btnOk.style, {
-      background: "#ef4444",
-      color: "#fff",
+      background: "rgb(var(--negative))",
+      color: "rgb(var(--on-accent))",
       border: "none",
       padding: "8px 12px",
       borderRadius: "8px",

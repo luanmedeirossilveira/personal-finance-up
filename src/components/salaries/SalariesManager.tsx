@@ -88,14 +88,14 @@ export default function SalariesManager({
         <div className="flex items-center gap-3">
           <div className="text-sm font-semibold">Total: {BRL(salaries.reduce((s, r) => s + Number(r.amount), 0))}</div>
           {onClose && (
-            <button onClick={onClose} className="text-sm px-3 py-1 rounded-md" style={{ background: "#1c2b22", color: "#8dcdb0" }}>Fechar</button>
+            <button onClick={onClose} className="text-sm px-3 py-1 rounded-md" style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--text-soft))" }}>Fechar</button>
           )}
         </div>
       </div>
 
       <div className="card p-4 space-y-3">
         {salaries.length === 0 && (
-          <div className="text-sm" style={{ color: "#8dcdb0" }}>Nenhuma renda para este mês. Adicione abaixo.</div>
+          <div className="text-sm" style={{ color: "rgb(var(--text-soft))" }}>Nenhuma renda para este mês. Adicione abaixo.</div>
         )}
 
         <div className="space-y-2">
@@ -113,14 +113,14 @@ export default function SalariesManager({
                 placeholder="0,00"
                 className="input-base w-32 flex-1 text-right"
               />
-              <button type="button" onClick={() => removeRow(idx)} className="px-3 py-2 rounded-md text-sm" style={{ background: "#1c2b22", color: "#8dcdb0" }}>Remover</button>
+              <button type="button" onClick={() => removeRow(idx)} className="px-3 py-2 rounded-md text-sm" style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--text-soft))" }}>Remover</button>
             </div>
           ))}
         </div>
 
         <div className="flex gap-2">
-          <button type="button" onClick={addRow} className="flex-1 py-2 rounded-xl" style={{ background: "#389671", color: "#fff" }}>Adicionar renda</button>
-          <button type="button" onClick={save} disabled={saving} className="flex-1 py-2 rounded-xl" style={{ background: "#1c2b22", color: "#8dcdb0", border: "1px solid #2a3d31" }}>
+          <button type="button" onClick={addRow} className="flex-1 py-2 rounded-xl" style={{ background: "rgb(var(--accent-strong))", color: "rgb(var(--on-accent))" }}>Adicionar renda</button>
+          <button type="button" onClick={save} disabled={saving} className="flex-1 py-2 rounded-xl" style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--text-soft))", border: "1px solid rgb(var(--border))" }}>
             {saving ? "Salvando..." : "Salvar"}
           </button>
         </div>

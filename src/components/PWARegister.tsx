@@ -43,19 +43,19 @@ export default function PWARegister() {
     <div
       className="fixed bottom-4 left-4 right-4 z-50 flex items-center justify-between gap-3 px-4 py-3 rounded-2xl shadow-xl animate-fade-in"
       style={{
-        background: "#1c2b22",
-        border: "1px solid #389671",
-        boxShadow: "0 8px 32px rgba(56,150,113,0.2)",
+        background: "rgb(var(--surface-raised))",
+        border: "1px solid rgb(var(--accent-strong))",
+        boxShadow: "0 8px 32px rgb(var(--accent-strong) / 0.2)",
       }}
     >
       <div className="flex items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/icons/icon-192x192.png" alt="Logo" className="w-10 h-10 rounded-xl" />
+        <img src="/icons/android-chrome-192x192.png" alt="" className="w-10 h-10" />
         <div>
-          <p className="text-sm font-semibold" style={{ color: "#f0f9f4" }}>
+          <p className="text-sm font-semibold" style={{ color: "rgb(var(--text))" }}>
             Instalar app
           </p>
-          <p className="text-xs" style={{ color: "#4a6b58" }}>
+          <p className="text-xs" style={{ color: "rgb(var(--text-muted))" }}>
             Acesso rápido na tela inicial
           </p>
         </div>
@@ -64,14 +64,14 @@ export default function PWARegister() {
         <button
           onClick={() => setShowBanner(false)}
           className="text-xs px-3 py-1.5 rounded-lg"
-          style={{ color: "#4a6b58" }}
+          style={{ color: "rgb(var(--text-muted))" }}
         >
           Agora não
         </button>
         <button
           onClick={handleInstall}
           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg"
-          style={{ background: "#389671", color: "#fff" }}
+          style={{ background: "rgb(var(--accent-strong))", color: "rgb(var(--on-accent))" }}
         >
           <Download size={13} />
           Instalar

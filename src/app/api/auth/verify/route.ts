@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     const sessionToken = await createSession(userId);
     await setSessionCookie(sessionToken);
 
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return NextResponse.redirect(new URL("/hoje", req.url));
   } catch (error) {
     console.error("Email verify error:", error);
     return NextResponse.redirect(new URL("/login?error=server_error", req.url));

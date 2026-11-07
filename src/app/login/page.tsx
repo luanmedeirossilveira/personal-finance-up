@@ -34,7 +34,7 @@ export default function LoginPage() {
       if (data.requiresVerification) {
         setStep("sent");
       } else {
-        router.push("/dashboard");
+        router.push("/hoje");
         router.refresh();
       }
     } finally {
@@ -44,22 +44,24 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{
-      background: "radial-gradient(ellipse at 30% 20%, rgba(56,150,113,0.12) 0%, transparent 60%), #0f1a16"
+      background: "radial-gradient(ellipse at 30% 20%, rgb(var(--accent-strong) / 0.12) 0%, transparent 60%), rgb(var(--bg))"
     }}>
       <div className="w-full max-w-sm animate-fade-in">
         {/* Logo */}
         <div className="mb-10 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/android-chrome-192x192.png" alt="" width={96} height={96} className="mx-auto mb-4 w-24 h-24" />
           <h1 className="text-4xl font-black tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
-            <span style={{ color: "#5ab28d" }}>Contas</span>
-            <span style={{ color: "#8dcdb0", fontWeight: 300 }}> Cotidiano</span>
+            <span style={{ color: "rgb(var(--accent))" }}>Contas</span>
+            <span style={{ color: "rgb(var(--text-soft))", fontWeight: 300 }}> Cotidiano</span>
           </h1>
-          <p className="text-sm mt-2" style={{ color: "#4a6b58" }}>Controle financeiro pessoal</p>
+          <p className="text-sm mt-2" style={{ color: "rgb(var(--text-muted))" }}>Controle financeiro pessoal</p>
         </div>
 
         {step === "login" ? (
           <form onSubmit={handleSubmit} className="card p-6 space-y-4">
             <div>
-              <label className="block text-xs font-medium mb-2" style={{ color: "#8dcdb0", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              <label className="block text-xs font-medium mb-2" style={{ color: "rgb(var(--text-soft))", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                 Email
               </label>
               <input
@@ -73,7 +75,7 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-2" style={{ color: "#8dcdb0", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              <label className="block text-xs font-medium mb-2" style={{ color: "rgb(var(--text-soft))", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                 Senha
               </label>
               <input
@@ -88,7 +90,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="text-sm py-3 px-4 rounded-lg" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>
+              <div className="text-sm py-3 px-4 rounded-lg" style={{ background: "rgb(var(--negative) / 0.1)", color: "rgb(var(--negative))", border: "1px solid rgb(var(--negative) / 0.2)" }}>
                 {error}
               </div>
             )}
@@ -98,37 +100,37 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full py-3 rounded-xl font-semibold text-sm transition-all"
               style={{
-                background: loading ? "#2a3d31" : "#389671",
-                color: loading ? "#4a6b58" : "#fff",
+                background: loading ? "rgb(var(--border))" : "rgb(var(--accent-strong))",
+                color: loading ? "rgb(var(--text-muted))" : "rgb(var(--on-accent))",
                 cursor: loading ? "not-allowed" : "pointer",
               }}
             >
               {loading ? "Entrando..." : "Entrar"}
             </button>
 
-            <p className="text-center text-xs" style={{ color: "#4a6b58" }}>
+            <p className="text-center text-xs" style={{ color: "rgb(var(--text-muted))" }}>
               <Link href="/login/forgot">Esqueceu a senha?</Link><br />
             </p>
           </form>
         ) : (
           <div className="card p-8 text-center space-y-4">
-            <div className="w-14 h-14 rounded-full mx-auto flex items-center justify-center" style={{ background: "rgba(56,150,113,0.15)", border: "1px solid rgba(56,150,113,0.3)" }}>
+            <div className="w-14 h-14 rounded-full mx-auto flex items-center justify-center" style={{ background: "rgb(var(--accent-strong) / 0.15)", border: "1px solid rgb(var(--accent-strong) / 0.3)" }}>
               <span className="text-2xl">📧</span>
             </div>
             <h2 className="text-lg font-semibold" style={{ fontFamily: "var(--font-display)" }}>
               Verifique seu email
             </h2>
-            <p className="text-sm" style={{ color: "#8dcdb0" }}>
+            <p className="text-sm" style={{ color: "rgb(var(--text-soft))" }}>
               Enviamos um link de acesso para<br />
-              <strong style={{ color: "#f0f9f4" }}>{email}</strong>
+              <strong style={{ color: "rgb(var(--text))" }}>{email}</strong>
             </p>
-            <p className="text-xs" style={{ color: "#4a6b58" }}>
+            <p className="text-xs" style={{ color: "rgb(var(--text-muted))" }}>
               O link expira em 24 horas. Depois de verificar, você não precisará verificar novamente por 30 dias.
             </p>
             <button
               onClick={() => setStep("login")}
               className="text-xs underline"
-              style={{ color: "#4a6b58" }}
+              style={{ color: "rgb(var(--text-muted))" }}
             >
               Tentar com outro email
             </button>

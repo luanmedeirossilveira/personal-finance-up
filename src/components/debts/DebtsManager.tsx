@@ -305,7 +305,7 @@ export default function DebtsManager({
         <button
           onClick={openNew}
           className="px-3 py-2 rounded-md text-sm"
-          style={{ background: "#389671", color: "#fff" }}
+          style={{ background: "rgb(var(--accent-strong))", color: "rgb(var(--on-accent))" }}
         >
           Adicionar
         </button>
@@ -315,7 +315,7 @@ export default function DebtsManager({
       <div className="card p-4 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr style={{ color: "#4a6b58" }}>
+            <tr style={{ color: "rgb(var(--text-muted))" }}>
               <th className="text-left p-2">Nome</th>
               <th className="text-left p-2">Valor da dívida</th>
               <th className="text-left p-2">Pago total</th>
@@ -333,7 +333,7 @@ export default function DebtsManager({
                 <td
                   colSpan={6}
                   className="p-4 text-center"
-                  style={{ color: "#4a6b58" }}
+                  style={{ color: "rgb(var(--text-muted))" }}
                 >
                   Nenhuma dívida cadastrada.
                 </td>
@@ -345,22 +345,22 @@ export default function DebtsManager({
                 <tr
                   key={debt.id}
                   className="border-t"
-                  style={{ borderColor: "#2a3d31" }}
+                  style={{ borderColor: "rgb(var(--border))" }}
                 >
-                  <td className="p-2" style={{ color: "#f0f9f4" }}>
+                  <td className="p-2" style={{ color: "rgb(var(--text))" }}>
                     {debt.name}
                   </td>
-                  <td className="p-2" style={{ color: "#f0f9f4" }}>
+                  <td className="p-2" style={{ color: "rgb(var(--text))" }}>
                     {BRL(debt.amount)}
                   </td>
                   <td className="p-2">
-                    <span style={{ color: "#5ab28d" }}>
+                    <span style={{ color: "rgb(var(--accent))" }}>
                       {BRL(debt.paidAmount)}
                     </span>
                     {remaining > 0 && (
                       <span
                         className="text-xs ml-1"
-                        style={{ color: "#4a6b58" }}
+                        style={{ color: "rgb(var(--text-muted))" }}
                       >
                         (faltam {BRL(remaining)})
                       </span>
@@ -368,7 +368,7 @@ export default function DebtsManager({
                   </td>
                   <td
                     className="p-2"
-                    style={{ color: debt.paidPartial ? "#5ab28d" : "#4a6b58" }}
+                    style={{ color: debt.paidPartial ? "rgb(var(--accent))" : "rgb(var(--text-muted))" }}
                   >
                     {debt.paidPartial ? BRL(debt.paidPartial) : "—"}
                   </td>
@@ -376,8 +376,8 @@ export default function DebtsManager({
                     <span
                       className="text-xs px-2 py-0.5 rounded-full"
                       style={{
-                        background: debt.isPaid ? "#1a3d2a" : "#2a1a1a",
-                        color: debt.isPaid ? "#5ab28d" : "#f87171",
+                        background: debt.isPaid ? "rgb(var(--accent-bg))" : "rgb(var(--negative-bg))",
+                        color: debt.isPaid ? "rgb(var(--accent))" : "rgb(var(--negative-soft))",
                       }}
                     >
                       {debt.isPaid ? "Pago" : "Pendente"}
@@ -388,28 +388,28 @@ export default function DebtsManager({
                       <button
                         onClick={() => openDetail(debt, "history")}
                         className="px-2 py-1 rounded-md text-xs"
-                        style={{ background: "#1c2b22", color: "#8dcdb0" }}
+                        style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--text-soft))" }}
                       >
                         Histórico
                       </button>
                       <button
                         onClick={() => openDetail(debt, "bills")}
                         className="px-2 py-1 rounded-md text-xs"
-                        style={{ background: "#1c2b22", color: "#8dcdb0" }}
+                        style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--text-soft))" }}
                       >
                         Vincular bill
                       </button>
                       <button
                         onClick={() => openEdit(debt)}
                         className="px-2 py-1 rounded-md text-xs"
-                        style={{ background: "#1c2b22", color: "#8dcdb0" }}
+                        style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--text-soft))" }}
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => setShowDelete(debt)}
                         className="px-2 py-1 rounded-md text-xs"
-                        style={{ background: "#2a2a2a", color: "#f87171" }}
+                        style={{ background: "rgb(var(--border))", color: "rgb(var(--negative-soft))" }}
                       >
                         Excluir
                       </button>
@@ -455,7 +455,7 @@ export default function DebtsManager({
                   <div className="col-span-2">
                     <label
                       className="block text-xs mb-1"
-                      style={{ color: "#8dcdb0" }}
+                      style={{ color: "rgb(var(--text-soft))" }}
                     >
                       Nome
                     </label>
@@ -471,7 +471,7 @@ export default function DebtsManager({
                   <div className="col-span-2">
                     <label
                       className="block text-xs mb-1"
-                      style={{ color: "#8dcdb0" }}
+                      style={{ color: "rgb(var(--text-soft))" }}
                     >
                       Valor da dívida
                     </label>
@@ -486,7 +486,7 @@ export default function DebtsManager({
                       placeholder="0,00"
                     />
                     {editing.id && (
-                      <p className="text-xs mt-1" style={{ color: "#4a6b58" }}>
+                      <p className="text-xs mt-1" style={{ color: "rgb(var(--text-muted))" }}>
                         Se o valor mudou, a alteração será registrada no
                         histórico de renegociações.
                       </p>
@@ -497,7 +497,7 @@ export default function DebtsManager({
                     <div className="col-span-2">
                       <label
                         className="block text-xs mb-1"
-                        style={{ color: "#8dcdb0" }}
+                        style={{ color: "rgb(var(--text-soft))" }}
                       >
                         Motivo da alteração
                       </label>
@@ -513,7 +513,7 @@ export default function DebtsManager({
                   <div className="col-span-2">
                     <label
                       className="block text-xs mb-1"
-                      style={{ color: "#8dcdb0" }}
+                      style={{ color: "rgb(var(--text-soft))" }}
                     >
                       Observações
                     </label>
@@ -529,8 +529,8 @@ export default function DebtsManager({
                     <div
                       className="w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer"
                       style={{
-                        borderColor: editing.isPaid ? "#389671" : "#2a3d31",
-                        background: editing.isPaid ? "#389671" : "transparent",
+                        borderColor: editing.isPaid ? "rgb(var(--accent-strong))" : "rgb(var(--border))",
+                        background: editing.isPaid ? "rgb(var(--accent-strong))" : "transparent",
                       }}
                       onClick={() =>
                         setEditing({ ...editing, isPaid: !editing.isPaid })
@@ -541,7 +541,7 @@ export default function DebtsManager({
                           <polyline
                             points="2,7 5,10 10,3"
                             fill="none"
-                            stroke="#fff"
+                            stroke="rgb(var(--on-accent))"
                             strokeWidth={3}
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -549,7 +549,7 @@ export default function DebtsManager({
                         </svg>
                       )}
                     </div>
-                    <span className="text-sm" style={{ color: "#8dcdb0" }}>
+                    <span className="text-sm" style={{ color: "rgb(var(--text-soft))" }}>
                       Marcar como pago
                     </span>
                     <input
@@ -568,14 +568,14 @@ export default function DebtsManager({
                       setEditing(null);
                     }}
                     className="px-4 py-2 rounded-md"
-                    style={{ background: "#1c2b22", color: "#8dcdb0" }}
+                    style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--text-soft))" }}
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     className="px-4 py-2 rounded-md"
-                    style={{ background: "#389671", color: "#fff" }}
+                    style={{ background: "rgb(var(--accent-strong))", color: "rgb(var(--on-accent))" }}
                   >
                     Salvar
                   </button>
@@ -611,17 +611,17 @@ export default function DebtsManager({
                   <h3 className="text-base font-black">{detailDebt.name}</h3>
                   <div
                     className="flex gap-4 mt-1 text-xs"
-                    style={{ color: "#4a6b58" }}
+                    style={{ color: "rgb(var(--text-muted))" }}
                   >
                     <span>
                       Dívida:{" "}
-                      <strong style={{ color: "#f0f9f4" }}>
+                      <strong style={{ color: "rgb(var(--text))" }}>
                         {BRL(detailDebt.amount)}
                       </strong>
                     </span>
                     <span>
                       Pago total:{" "}
-                      <strong style={{ color: "#5ab28d" }}>
+                      <strong style={{ color: "rgb(var(--accent))" }}>
                         {BRL(detailDebt.paidAmount)}
                       </strong>
                     </span>
@@ -630,7 +630,7 @@ export default function DebtsManager({
                       {String(year).slice(2)}:{" "}
                       <strong
                         style={{
-                          color: detailDebt.paidPartial ? "#5ab28d" : "#4a6b58",
+                          color: detailDebt.paidPartial ? "rgb(var(--accent))" : "rgb(var(--text-muted))",
                         }}
                       >
                         {detailDebt.paidPartial
@@ -644,7 +644,7 @@ export default function DebtsManager({
                 {/* Abas */}
                 <div
                   className="flex gap-2 border-b"
-                  style={{ borderColor: "#2a3d31" }}
+                  style={{ borderColor: "rgb(var(--border))" }}
                 >
                   {(["history", "bills"] as const).map((tab) => (
                     <button
@@ -654,9 +654,9 @@ export default function DebtsManager({
                       style={{
                         borderBottom:
                           activeTab === tab
-                            ? "2px solid #389671"
+                            ? "2px solid rgb(var(--accent-strong))"
                             : "2px solid transparent",
-                        color: activeTab === tab ? "#5ab28d" : "#4a6b58",
+                        color: activeTab === tab ? "rgb(var(--accent))" : "rgb(var(--text-muted))",
                       }}
                     >
                       {tab === "history"
@@ -668,7 +668,7 @@ export default function DebtsManager({
 
                 {/* Conteúdo da aba */}
                 {detailLoading ? (
-                  <p className="text-sm" style={{ color: "#4a6b58" }}>
+                  <p className="text-sm" style={{ color: "rgb(var(--text-muted))" }}>
                     Carregando...
                   </p>
                 ) : activeTab === "history" ? (
@@ -677,14 +677,14 @@ export default function DebtsManager({
                     <form
                       onSubmit={submitHistory}
                       className="p-3 rounded-lg border space-y-3"
-                      style={{ borderColor: "#2a3d31", background: "#131d17" }}
+                      style={{ borderColor: "rgb(var(--border))", background: "rgb(var(--bg))" }}
                     >
-                      <h4 className="text-sm font-bold" style={{ color: "#8dcdb0" }}>
+                      <h4 className="text-sm font-bold" style={{ color: "rgb(var(--text-soft))" }}>
                         Nova renegociação
                       </h4>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs mb-1" style={{ color: "#8dcdb0" }}>
+                          <label className="block text-xs mb-1" style={{ color: "rgb(var(--text-soft))" }}>
                             Novo valor da dívida
                           </label>
                           <input
@@ -698,7 +698,7 @@ export default function DebtsManager({
                           />
                         </div>
                         <div>
-                          <label className="block text-xs mb-1" style={{ color: "#8dcdb0" }}>
+                          <label className="block text-xs mb-1" style={{ color: "rgb(var(--text-soft))" }}>
                             Motivo
                           </label>
                           <input
@@ -717,7 +717,7 @@ export default function DebtsManager({
                           checked={createBillFromHistory}
                           onChange={(e) => setCreateBillFromHistory(e.target.checked)}
                         />
-                        <label htmlFor="createBillFromHistory" className="text-sm" style={{ color: "#8dcdb0" }}>
+                        <label htmlFor="createBillFromHistory" className="text-sm" style={{ color: "rgb(var(--text-soft))" }}>
                           Criar nova conta (bill) a partir deste histórico
                         </label>
                       </div>
@@ -725,7 +725,7 @@ export default function DebtsManager({
                       {createBillFromHistory && (
                         <div className="grid grid-cols-2 gap-3">
                           <div className="col-span-2">
-                            <label className="block text-xs mb-1" style={{ color: "#8dcdb0" }}>
+                            <label className="block text-xs mb-1" style={{ color: "rgb(var(--text-soft))" }}>
                               Nome da conta
                             </label>
                             <input
@@ -736,7 +736,7 @@ export default function DebtsManager({
                             />
                           </div>
                           <div>
-                            <label className="block text-xs mb-1" style={{ color: "#8dcdb0" }}>
+                            <label className="block text-xs mb-1" style={{ color: "rgb(var(--text-soft))" }}>
                               Valor da conta
                             </label>
                             <input
@@ -750,7 +750,7 @@ export default function DebtsManager({
                             />
                           </div>
                           <div>
-                            <label className="block text-xs mb-1" style={{ color: "#8dcdb0" }}>
+                            <label className="block text-xs mb-1" style={{ color: "rgb(var(--text-soft))" }}>
                               Mês
                             </label>
                             <select
@@ -766,7 +766,7 @@ export default function DebtsManager({
                             </select>
                           </div>
                           <div>
-                            <label className="block text-xs mb-1" style={{ color: "#8dcdb0" }}>
+                            <label className="block text-xs mb-1" style={{ color: "rgb(var(--text-soft))" }}>
                               Ano
                             </label>
                             <input
@@ -780,7 +780,7 @@ export default function DebtsManager({
                             />
                           </div>
                           <div>
-                            <label className="block text-xs mb-1" style={{ color: "#8dcdb0" }}>
+                            <label className="block text-xs mb-1" style={{ color: "rgb(var(--text-soft))" }}>
                               Tipo de pagamento
                             </label>
                             <select
@@ -797,7 +797,7 @@ export default function DebtsManager({
                           </div>
                           {historyBillPaymentType === "PARCELADA" && (
                             <div>
-                              <label className="block text-xs mb-1" style={{ color: "#8dcdb0" }}>
+                              <label className="block text-xs mb-1" style={{ color: "rgb(var(--text-soft))" }}>
                                 Quantidade de parcelas
                               </label>
                               <input
@@ -819,7 +819,7 @@ export default function DebtsManager({
                           type="submit"
                           disabled={historySubmitting}
                           className="px-3 py-2 rounded-md text-sm"
-                          style={{ background: "#389671", color: "#fff", opacity: historySubmitting ? 0.7 : 1 }}
+                          style={{ background: "rgb(var(--accent-strong))", color: "rgb(var(--on-accent))", opacity: historySubmitting ? 0.7 : 1 }}
                         >
                           {historySubmitting ? "Salvando..." : "Salvar histórico"}
                         </button>
@@ -827,13 +827,13 @@ export default function DebtsManager({
                     </form>
 
                     {history.length === 0 ? (
-                      <p className="text-sm" style={{ color: "#4a6b58" }}>
+                      <p className="text-sm" style={{ color: "rgb(var(--text-muted))" }}>
                         Nenhuma renegociação registrada.
                       </p>
                     ) : (
                       <table className="w-full text-sm">
                         <thead>
-                          <tr style={{ color: "#4a6b58" }}>
+                          <tr style={{ color: "rgb(var(--text-muted))" }}>
                             <th className="text-left p-2">Data</th>
                             <th className="text-left p-2">De</th>
                             <th className="text-left p-2">Para</th>
@@ -846,23 +846,23 @@ export default function DebtsManager({
                             <tr
                               key={h.id}
                               className="border-t"
-                              style={{ borderColor: "#2a3d31" }}
+                              style={{ borderColor: "rgb(var(--border))" }}
                             >
-                              <td className="p-2" style={{ color: "#4a6b58" }}>
+                              <td className="p-2" style={{ color: "rgb(var(--text-muted))" }}>
                                 {h.changedAt
                                   ? new Date(h.changedAt).toLocaleDateString("pt-BR")
                                   : "—"}
                               </td>
-                              <td className="p-2" style={{ color: "#f87171" }}>
+                              <td className="p-2" style={{ color: "rgb(var(--negative-soft))" }}>
                                 {BRL(h.previousAmount)}
                               </td>
-                              <td className="p-2" style={{ color: "#5ab28d" }}>
+                              <td className="p-2" style={{ color: "rgb(var(--accent))" }}>
                                 {BRL(h.newAmount)}
                               </td>
-                              <td className="p-2" style={{ color: "#8dcdb0" }}>
+                              <td className="p-2" style={{ color: "rgb(var(--text-soft))" }}>
                                 {h.reason || "—"}
                               </td>
-                              <td className="p-2" style={{ color: "#8dcdb0" }}>
+                              <td className="p-2" style={{ color: "rgb(var(--text-soft))" }}>
                                 {h.linkedBills && h.linkedBills.length > 0
                                   ? h.linkedBills
                                       .map(
@@ -882,14 +882,14 @@ export default function DebtsManager({
                   </div>
                 ) : // ── Aba Bills do mês ──
                 billsAvailable.length === 0 ? (
-                  <p className="text-sm" style={{ color: "#4a6b58" }}>
+                  <p className="text-sm" style={{ color: "rgb(var(--text-muted))" }}>
                     Nenhuma bill encontrada para {MONTHS[month - 1]}{" "}
                     {year}.
                   </p>
                 ) : (
                   <table className="w-full text-sm">
                     <thead>
-                      <tr style={{ color: "#4a6b58" }}>
+                      <tr style={{ color: "rgb(var(--text-muted))" }}>
                         <th className="text-left p-2">Bill</th>
                         <th className="text-left p-2">Valor</th>
                         <th className="text-left p-2">Status</th>
@@ -901,20 +901,20 @@ export default function DebtsManager({
                         <tr
                           key={bill.id}
                           className="border-t"
-                          style={{ borderColor: "#2a3d31" }}
+                          style={{ borderColor: "rgb(var(--border))" }}
                         >
-                          <td className="p-2" style={{ color: "#f0f9f4" }}>
+                          <td className="p-2" style={{ color: "rgb(var(--text))" }}>
                             {bill.name}
                           </td>
-                          <td className="p-2" style={{ color: "#5ab28d" }}>
+                          <td className="p-2" style={{ color: "rgb(var(--accent))" }}>
                             {BRL(bill.amount)}
                           </td>
                           <td className="p-2">
                             <span
                               className="text-xs px-2 py-0.5 rounded-full"
                               style={{
-                                background: bill.isPaid ? "#1a3d2a" : "#2a1a1a",
-                                color: bill.isPaid ? "#5ab28d" : "#f87171",
+                                background: bill.isPaid ? "rgb(var(--accent-bg))" : "rgb(var(--negative-bg))",
+                                color: bill.isPaid ? "rgb(var(--accent))" : "rgb(var(--negative-soft))",
                               }}
                             >
                               {bill.isPaid ? "Pago" : "Pendente"}
@@ -925,8 +925,8 @@ export default function DebtsManager({
                               onClick={() => toggleLink(bill)}
                               className="px-2 py-1 rounded-md text-xs"
                               style={{
-                                background: bill.linked ? "#2a1a1a" : "#1a3d2a",
-                                color: bill.linked ? "#f87171" : "#5ab28d",
+                                background: bill.linked ? "rgb(var(--negative-bg))" : "rgb(var(--accent-bg))",
+                                color: bill.linked ? "rgb(var(--negative-soft))" : "rgb(var(--accent))",
                               }}
                             >
                               {bill.linked ? "Desvincular" : "Vincular"}
@@ -942,7 +942,7 @@ export default function DebtsManager({
                   <button
                     onClick={() => setDetailDebt(null)}
                     className="px-4 py-2 rounded-md"
-                    style={{ background: "#1c2b22", color: "#8dcdb0" }}
+                    style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--text-soft))" }}
                   >
                     Fechar
                   </button>
@@ -965,7 +965,7 @@ export default function DebtsManager({
             <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 overflow-auto">
               <div className="card p-6 w-full sm:max-w-md mt-10 sm:mt-0">
                 <h3 className="text-base font-black">Confirmar exclusão</h3>
-                <p className="mt-2" style={{ color: "#4a6b58" }}>
+                <p className="mt-2" style={{ color: "rgb(var(--text-muted))" }}>
                   Remover &quot;{showDelete.name}&quot;? O histórico de renegociações e os
                   vínculos com bills também serão excluídos.
                 </p>
@@ -973,14 +973,14 @@ export default function DebtsManager({
                   <button
                     onClick={() => setShowDelete(null)}
                     className="px-4 py-2 rounded-md"
-                    style={{ background: "#1c2b22", color: "#8dcdb0" }}
+                    style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--text-soft))" }}
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={() => doDelete(showDelete)}
                     className="px-4 py-2 rounded-md"
-                    style={{ background: "#ef4444", color: "#fff" }}
+                    style={{ background: "rgb(var(--negative))", color: "rgb(var(--on-accent))" }}
                   >
                     Excluir
                   </button>

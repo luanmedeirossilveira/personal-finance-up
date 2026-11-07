@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { eq, and } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
+import { CLOSED_MONTH_ERROR, isMonthClosed } from "@/lib/month-closing";
 import { normalizeItems } from "@/lib/meal-cards/items";
 
 async function getOwnedCard(cardId: number, userId: number) {
@@ -26,6 +27,7 @@ export async function PATCH(
 
   const card = await getOwnedCard(cardId, user.id);
   if (!card) return NextResponse.json({ error: "Cartão não encontrado" }, { status: 404 });
+  if (await isMonthClosed(user.id, card.month, card.year)) return NextResponse.json(CLOSED_MONTH_ERROR, { status: 409 });
 
   const transaction = await db.query.mealCardTransactions.findFirst({
     where: and(
@@ -103,6 +105,7 @@ export async function DELETE(
 
   const card = await getOwnedCard(cardId, user.id);
   if (!card) return NextResponse.json({ error: "Cartão não encontrado" }, { status: 404 });
+  if (await isMonthClosed(user.id, card.month, card.year)) return NextResponse.json(CLOSED_MONTH_ERROR, { status: 409 });
 
   const transaction = await db.query.mealCardTransactions.findFirst({
     where: and(

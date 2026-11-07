@@ -4,14 +4,14 @@ import { db, schema } from "@/lib/db";
 import { eq, and, desc } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 import type { CheckinType } from "@/lib/db/schema";
-
-// Retorna o número da semana ISO para uma data
-function getISOWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
-}
+import {
+  computeSnapshot,
+  getRevisaoStatus,
+  parseCheckin,
+  reviewedMonth,
+  reviewedWeek,
+  snoozeRevisao,
+} from "@/lib/revisao";
 
 export async function GET(req: NextRequest) {
   const user = await getSession();
@@ -21,57 +21,46 @@ export async function GET(req: NextRequest) {
   const type = (searchParams.get("type") ?? "weekly") as CheckinType;
   const limit = Number.parseInt(searchParams.get("limit") ?? "8");
 
-  const checkins = await db.query.weeklyCheckins.findMany({
-    where: and(
-      eq(schema.weeklyCheckins.userId, user.id),
-      eq(schema.weeklyCheckins.type, type),
-    ),
-    orderBy: [desc(schema.weeklyCheckins.createdAt)],
-    limit,
-  });
+  const [checkins, status] = await Promise.all([
+    db.query.weeklyCheckins.findMany({
+      where: and(eq(schema.weeklyCheckins.userId, user.id), eq(schema.weeklyCheckins.type, type)),
+      orderBy: [desc(schema.weeklyCheckins.createdAt)],
+      limit,
+    }),
+    getRevisaoStatus(user.id),
+  ]);
 
-  // Verifica se já existe check-in para a semana atual
-  const now = new Date();
-  const currentWeek = getISOWeek(now);
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth() + 1;
-
-  const doneThisWeek = checkins.some(
-    (c) => c.weekNumber === currentWeek && c.year === currentYear && c.type === type,
-  );
-
-  return NextResponse.json({
-    checkins: checkins.map((c) => ({
-      ...c,
-      data: JSON.parse(c.data),
-    })),
-    meta: {
-      currentWeek,
-      currentMonth,
-      currentYear,
-      doneThisWeek,
-    },
-  });
+  return NextResponse.json({ checkins: checkins.map(parseCheckin), status });
 }
 
+// POST { type: 'weekly' | 'monthly', data } — grava a revisão da semana ISO anterior
+// (upsert, uma por semana/tipo) com o snapshot dos números calculado aqui no servidor.
+// POST { action: 'snooze' } — "adiar 2 horas", uma vez por semana.
 export async function POST(req: NextRequest) {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
   const body = await req.json();
-  const { type = "weekly", data } = body;
 
+  if (body.action === "snooze") {
+    const until = await snoozeRevisao(user.id);
+    if (!until) return NextResponse.json({ error: "Adiamento já usado nesta semana" }, { status: 409 });
+    return NextResponse.json({ until });
+  }
+
+  const type: CheckinType = body.type === "monthly" ? "monthly" : "weekly";
   const now = new Date();
-  const weekNumber = getISOWeek(now);
-  const month = now.getMonth() + 1;
-  const year = now.getFullYear();
+  const week = reviewedWeek(now);
+  const month = type === "monthly" ? reviewedMonth(now).month : now.getMonth() + 1;
 
-  // Upsert — apenas um check-in por semana por tipo
+  const snapshot = await computeSnapshot(user.id, now);
+  const data = { ...(body.data ?? {}), snapshot };
+
   const existing = await db.query.weeklyCheckins.findFirst({
     where: and(
       eq(schema.weeklyCheckins.userId, user.id),
-      eq(schema.weeklyCheckins.weekNumber, weekNumber),
-      eq(schema.weeklyCheckins.year, year),
+      eq(schema.weeklyCheckins.weekNumber, week.weekNumber),
+      eq(schema.weeklyCheckins.year, week.isoYear),
       eq(schema.weeklyCheckins.type, type),
     ),
   });
@@ -79,23 +68,23 @@ export async function POST(req: NextRequest) {
   if (existing) {
     const [updated] = await db
       .update(schema.weeklyCheckins)
-      .set({ data: JSON.stringify(data) })
+      .set({ data: JSON.stringify(data), month })
       .where(eq(schema.weeklyCheckins.id, existing.id))
       .returning();
-    return NextResponse.json({ ...updated, data });
+    return NextResponse.json(parseCheckin(updated));
   }
 
   const [created] = await db
     .insert(schema.weeklyCheckins)
     .values({
       userId: user.id,
-      weekNumber,
+      weekNumber: week.weekNumber,
       month,
-      year,
+      year: week.isoYear,
       type,
       data: JSON.stringify(data),
     })
     .returning();
 
-  return NextResponse.json({ ...created, data }, { status: 201 });
+  return NextResponse.json(parseCheckin(created), { status: 201 });
 }

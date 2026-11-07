@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { eq, and } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
+import { CLOSED_MONTH_ERROR, isMonthClosed } from "@/lib/month-closing";
 import { normalizeItems } from "@/lib/items";
 
 // Recalcula o total da bill baseado nas transações
@@ -40,6 +41,9 @@ export async function PATCH(
 
   if (!bill) {
     return NextResponse.json({ error: "Conta não encontrada" }, { status: 404 });
+  }
+  if (await isMonthClosed(user.id, bill.month, bill.year)) {
+    return NextResponse.json(CLOSED_MONTH_ERROR, { status: 409 });
   }
 
   // Verificar se a transação pertence à bill
@@ -138,6 +142,9 @@ export async function DELETE(
 
   if (!bill) {
     return NextResponse.json({ error: "Conta não encontrada" }, { status: 404 });
+  }
+  if (await isMonthClosed(user.id, bill.month, bill.year)) {
+    return NextResponse.json(CLOSED_MONTH_ERROR, { status: 409 });
   }
 
   // Verificar se a transação pertence à bill

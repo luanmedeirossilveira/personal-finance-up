@@ -171,7 +171,7 @@ export default function MealCardTransactionForm({
           className="card rounded-t-2xl sm:rounded-2xl p-6 space-y-4 w-full sm:max-w-md max-h-[90vh] overflow-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          <h4 className="text-sm font-bold" style={{ color: "#f0f9f4" }}>
+          <h4 className="text-sm font-bold" style={{ color: "rgb(var(--text))" }}>
             {transaction ? "Editar compra" : "Nova compra"}
           </h4>
 
@@ -193,18 +193,18 @@ export default function MealCardTransactionForm({
               onClick={() => fileRef.current?.click()}
               disabled={scanning}
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-[0.99] disabled:opacity-70"
-              style={{ background: "#1c2b22", color: "#8dcdb0", border: "1px dashed #2a3d31" }}
+              style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--text-soft))", border: "1px dashed rgb(var(--border))" }}
             >
               {scanning ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />}
               {scanning ? "Lendo nota..." : "Escanear nota (foto, imagem ou PDF)"}
             </button>
             {scanError && (
-              <p className="text-[11px] mt-1.5" style={{ color: "#f59e0b" }}>
+              <p className="text-[11px] mt-1.5" style={{ color: "rgb(var(--warning))" }}>
                 {scanError}
               </p>
             )}
             {scanSource && (
-              <p className="text-[11px] mt-1.5" style={{ color: "#8dcdb0" }}>
+              <p className="text-[11px] mt-1.5" style={{ color: "rgb(var(--text-soft))" }}>
                 Lido por IA — confira os itens antes de salvar.
               </p>
             )}
@@ -212,44 +212,44 @@ export default function MealCardTransactionForm({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
                 Descrição *
               </label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
                 placeholder="Supermercado, iFood..."
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
                 Valor total *
               </label>
               <input
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 inputMode="decimal"
-                className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
                 placeholder="42,90"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
                 Categoria
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
               >
                 <option value="">Selecionar...</option>
                 {CATEGORIES.map((c) => (
-                  <option key={c} value={c} style={{ background: "#1c2b22" }}>
+                  <option key={c} value={c} style={{ background: "rgb(var(--surface-raised))" }}>
                     {c.charAt(0).toUpperCase() + c.slice(1)}
                   </option>
                 ))}
@@ -257,14 +257,14 @@ export default function MealCardTransactionForm({
             </div>
 
             <div className="col-span-2">
-              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+              <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
                 Data
               </label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full p-2 rounded bg-[#0f1a15] text-sm"
+                className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
               />
             </div>
           </div>
@@ -272,14 +272,14 @@ export default function MealCardTransactionForm({
           {/* Itens (produtos) */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium uppercase tracking-wide" style={{ color: "#8dcdb0" }}>
+              <span className="text-xs font-medium uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
                 Produtos ({items.length})
               </span>
               <button
                 type="button"
                 onClick={addItem}
                 className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium"
-                style={{ background: "#1c2b22", color: "#8dcdb0", border: "1px solid #2a3d31" }}
+                style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--text-soft))", border: "1px solid rgb(var(--border))" }}
               >
                 <Plus size={12} />
                 Item
@@ -293,14 +293,14 @@ export default function MealCardTransactionForm({
                     <input
                       value={row.name}
                       onChange={(e) => updateItem(i, { name: e.target.value })}
-                      className="flex-1 min-w-0 p-1.5 rounded bg-[#0f1a15] text-xs"
+                      className="flex-1 min-w-0 p-1.5 rounded bg-[rgb(var(--bg))] text-xs"
                       placeholder="Produto"
                     />
                     <input
                       value={row.quantity}
                       onChange={(e) => updateItem(i, { quantity: e.target.value })}
                       inputMode="decimal"
-                      className="w-12 p-1.5 rounded bg-[#0f1a15] text-xs text-center"
+                      className="w-12 p-1.5 rounded bg-[rgb(var(--bg))] text-xs text-center"
                       placeholder="1"
                       aria-label="Quantidade"
                     />
@@ -308,7 +308,7 @@ export default function MealCardTransactionForm({
                       value={row.amount}
                       onChange={(e) => updateItem(i, { amount: e.target.value })}
                       inputMode="decimal"
-                      className="w-20 p-1.5 rounded bg-[#0f1a15] text-xs text-right"
+                      className="w-20 p-1.5 rounded bg-[rgb(var(--bg))] text-xs text-right"
                       placeholder="0,00"
                       aria-label="Valor do item"
                     />
@@ -316,7 +316,7 @@ export default function MealCardTransactionForm({
                       type="button"
                       onClick={() => removeItem(i)}
                       className="p-1.5 rounded flex-shrink-0"
-                      style={{ background: "#1c2b22", color: "#ef4444" }}
+                      style={{ background: "rgb(var(--surface-raised))", color: "rgb(var(--negative))" }}
                       aria-label="Remover item"
                     >
                       <X size={12} />
@@ -325,14 +325,14 @@ export default function MealCardTransactionForm({
                 ))}
 
                 <div className="flex items-center justify-between pt-1">
-                  <span className="text-[11px]" style={{ color: "#4a6b58" }}>
+                  <span className="text-[11px]" style={{ color: "rgb(var(--text-muted))" }}>
                     Soma dos itens: {BRL(itemsTotal)}
                   </span>
                   <button
                     type="button"
                     onClick={() => setAmount(itemsTotal.toFixed(2))}
                     className="text-[11px] font-medium underline"
-                    style={{ color: "#5ab28d" }}
+                    style={{ color: "rgb(var(--accent))" }}
                   >
                     Usar como total
                   </button>
@@ -346,7 +346,7 @@ export default function MealCardTransactionForm({
               type="button"
               onClick={onClose}
               className="px-3 py-2 rounded text-sm"
-              style={{ background: "#1c2b22", border: "1px solid #2a3d31", color: "#8dcdb0" }}
+              style={{ background: "rgb(var(--surface-raised))", border: "1px solid rgb(var(--border))", color: "rgb(var(--text-soft))" }}
             >
               Cancelar
             </button>
@@ -354,7 +354,7 @@ export default function MealCardTransactionForm({
               type="submit"
               disabled={saving}
               className="px-3 py-2 rounded text-sm font-semibold"
-              style={{ background: "#389671", color: "#fff" }}
+              style={{ background: "rgb(var(--accent-strong))", color: "rgb(var(--on-accent))" }}
             >
               {saving ? "Salvando..." : transaction ? "Salvar" : "Adicionar"}
             </button>

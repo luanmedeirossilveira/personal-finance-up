@@ -4,6 +4,11 @@ import { eq, and } from "drizzle-orm";
 import { sendDueSoonAlert, sendMonthlyOverview, sendFutureBillReminder } from "@/lib/email";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { saveNetWorthSnapshot } from "@/lib/networth";
+import { syncUser } from "@/lib/pluggy/sync";
+
+// v3: o sync diário do Pluggy reaproveita este cron (evita estourar o limite de crons do Hobby).
+export const maxDuration = 60;
 
 // This route is called by Vercel Cron
 // Configure in vercel.json: { "crons": [{"path": "/api/cron/notifications", "schedule": "0 8 * * *"}] }
@@ -111,5 +116,15 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, processed: { dueSoon: dueSoon.length, isMonthStart: day === 1 } });
+  // v3: sincroniza o Open Finance (se houver conexão) e grava o retrato do patrimônio do dia.
+  let sync: Awaited<ReturnType<typeof syncUser>> | { error: string } | null = null;
+  try {
+    const items = await db.query.pluggyItems.findMany({ where: eq(schema.pluggyItems.userId, adminUser.id) });
+    if (items.length > 0) sync = await syncUser(adminUser.id);
+    else await saveNetWorthSnapshot(adminUser.id);
+  } catch (e) {
+    sync = { error: (e as Error).message };
+  }
+
+  return NextResponse.json({ ok: true, processed: { dueSoon: dueSoon.length, isMonthStart: day === 1 }, sync });
 }

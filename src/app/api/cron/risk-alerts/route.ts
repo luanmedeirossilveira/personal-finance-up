@@ -6,7 +6,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, schema } from "@/lib/db";
 import { eq, and } from "drizzle-orm";
 import { detectRisks } from "@/lib/risk";
-import { sendRiskAlertsEmail } from "@/lib/email";
+import { sendInsightsEmail, sendRiskAlertsEmail } from "@/lib/email";
+import { generateWeeklyInsights } from "@/lib/insights";
+import { getTodayData } from "@/lib/today";
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -43,8 +45,24 @@ export async function GET(req: NextRequest) {
 
   const detected = detectRisks(currentBills, previousBills);
 
+  const recipients = [
+    adminUser.email,
+    ...(process.env.PARTNER_EMAIL ? [process.env.PARTNER_EMAIL] : []),
+  ];
+
+  // v3: "Radar da semana" — gera os insights (regras + Gemini) e envia segunda de manhã.
+  // Vai só para você: os insights partem dos seus dados e da sua Revisão.
+  let radarSent = false;
+  try {
+    const [insights, today] = await Promise.all([generateWeeklyInsights(adminUser.id, now), getTodayData(adminUser.id, now)]);
+    await sendInsightsEmail(adminUser.email, { summary: today.summary, insights });
+    radarSent = true;
+  } catch (e) {
+    console.error("Radar da semana falhou:", e);
+  }
+
   if (detected.length === 0) {
-    return NextResponse.json({ ok: true, alerts: 0 });
+    return NextResponse.json({ ok: true, alerts: 0, radarSent });
   }
 
   // Persiste alertas (upsert por tipo/mês/ano — evita duplicatas se o cron rodar duas vezes)
@@ -73,14 +91,9 @@ export async function GET(req: NextRequest) {
 
   // Envia email para Luan + Franciele
   // RESEND_FROM_EMAIL já está no env. Os destinatários são configurados via env.
-  const recipients = [
-    adminUser.email,
-    ...(process.env.PARTNER_EMAIL ? [process.env.PARTNER_EMAIL] : []),
-  ];
-
   for (const email of recipients) {
     await sendRiskAlertsEmail(email, detected, month, year);
   }
 
-  return NextResponse.json({ ok: true, alerts: detected.length, recipients: recipients.length });
+  return NextResponse.json({ ok: true, alerts: detected.length, recipients: recipients.length, radarSent });
 }

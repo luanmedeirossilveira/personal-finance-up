@@ -25,7 +25,7 @@ export function showToast(message: string, opts: ToastOptions = {}) {
   const toast = document.createElement("div");
   Object.assign(toast.style, {
     background: "rgba(0,0,0,0.75)",
-    color: "#fff",
+    color: "rgb(var(--on-accent))",
     padding: "10px 14px",
     borderRadius: "8px",
     boxShadow: "0 6px 18px rgba(0,0,0,0.3)",

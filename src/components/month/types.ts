@@ -38,6 +38,7 @@ export interface CardTransaction {
   name: string;
   amount: number;
   installment?: string | null;
+  recurring?: boolean;
   category?: string | null;
   date?: string | null;
 }

@@ -67,3 +67,10 @@ describe('migrations v3 — cartões planejados', () => {
     expect(sql).toContain('ALTER TABLE accounts ADD COLUMN open_bill_amount REAL');
   });
 });
+
+describe('migrations v3 — transações recorrentes', () => {
+  it('contains recurring column on card_transactions', () => {
+    const sql = readFileSync('./drizzle/0022_add_recurring_to_card_transactions.sql', 'utf8');
+    expect(sql).toContain('ALTER TABLE card_transactions ADD COLUMN recurring INTEGER NOT NULL DEFAULT 0');
+  });
+});

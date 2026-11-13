@@ -11,7 +11,7 @@ import {
 import type { Bill, CardTransaction } from "./types";
 
 // Plano de migração — construído ao abrir o modal, permite escolher quais contas
-// (e, dentro de faturas de cartão, quais parcelas) serão migradas para o próximo mês.
+// (e, dentro de faturas de cartão, quais parcelas/recorrentes) serão migradas para o próximo mês.
 interface MigrateNormalItem {
   bill: Bill;
   nextInstallment: string | null;
@@ -21,7 +21,9 @@ interface MigrateParcela {
   name: string;
   amount: number;
   installment: string | null;
-  nextInstallment: string;
+  // null para recorrentes (assinaturas), que se repetem sem parcela.
+  nextInstallment: string | null;
+  recurring: boolean;
   category: string | null;
   date: string | null;
 }
@@ -70,16 +72,19 @@ export function useMigration(bills: Bill[], month: number, year: number) {
         const transactions: CardTransaction[] = await txRes.json();
         const parcelas = transactions
           .map((tx) => {
-            const nextInstallment = incrementStrictInstallment(tx.installment);
-            if (!nextInstallment) return null;
+            const recurring = !!tx.recurring;
+            const nextInstallment = recurring ? null : incrementStrictInstallment(tx.installment);
+            if (!recurring && !nextInstallment) return null;
             return {
               id: tx.id,
               name: tx.name,
               amount: tx.amount,
               installment: tx.installment ?? null,
               nextInstallment,
+              recurring,
               category: tx.category ?? null,
-              date: tx.date ?? null,
+              // A data da compra é do mês atual; a recorrência do próximo mês não tem data ainda.
+              date: recurring ? null : tx.date ?? null,
             };
           })
           .filter((p): p is MigrateParcela => p !== null);
@@ -224,29 +229,29 @@ export function useMigration(bills: Bill[], month: number, year: number) {
         }
       }
 
-      // --- Faturas de cartão: só as parcelas selecionadas viram linhas reais ---
+      // --- Faturas de cartão: só as parcelas/recorrentes selecionadas viram linhas reais ---
       // Ex.: "1/10" nesta fatura vira "2/10" na próxima, mesmo valor, até "10/10".
+      // Recorrentes (assinaturas) são repetidas com o mesmo valor.
       let migratedCards = 0;
       for (const { bill, parcelas } of chosenCards) {
         const carried = parcelas.map((p) => ({
           name: p.name,
           amount: p.amount,
           installment: p.nextInstallment,
+          recurring: p.recurring,
           category: p.category,
           date: p.date,
         }));
 
         const existing = existingByName.get(bill.name.trim().toLowerCase());
         if (existing) {
-          // Idempotência: não duplicar parcelas já presentes na fatura do próximo mês.
+          // Idempotência: não duplicar parcelas/recorrentes já presentes na fatura do próximo mês.
           const existingTxRes = await fetch(`/api/bills/${existing.id}/transactions`);
           const existingTx: CardTransaction[] = existingTxRes.ok ? await existingTxRes.json() : [];
-          const seen = new Set(
-            existingTx.map((t) => `${t.name.trim().toLowerCase()}|${t.installment ?? ""}`),
-          );
-          const toAdd = carried.filter(
-            (t) => !seen.has(`${t.name.trim().toLowerCase()}|${t.installment ?? ""}`),
-          );
+          const txKey = (t: { name: string; installment?: string | null; recurring?: boolean }) =>
+            `${t.name.trim().toLowerCase()}|${t.recurring ? "recorrente" : t.installment ?? ""}`;
+          const seen = new Set(existingTx.map(txKey));
+          const toAdd = carried.filter((t) => !seen.has(txKey(t)));
           for (const parcela of toAdd) {
             requests.push(fetch(`/api/bills/${existing.id}/transactions`, {
               method: "POST",

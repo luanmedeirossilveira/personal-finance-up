@@ -18,6 +18,7 @@ interface CardTransaction {
   name: string;
   amount: number;
   installment?: string | null;
+  recurring?: boolean;
   category?: string | null;
   date?: string | null;
   items?: CardTransactionItem[];
@@ -59,7 +60,9 @@ export default function CardTransactionForm({
   const isEditing = !!transaction;
   const [name, setName] = useState(transaction?.name || "");
   const [amount, setAmount] = useState(transaction?.amount?.toString() || "");
-  const [installment, setInstallment] = useState(transaction?.installment || "");
+  // Parcela só existe em compra parcelada; na edição é preservada (somente leitura).
+  const existingInstallment = transaction?.installment?.trim() || null;
+  const [recurring, setRecurring] = useState(!!transaction?.recurring);
   const [category, setCategory] = useState(transaction?.category ? normalizeCategory(transaction.category) : "");
   const [date, setDate] = useState(transaction?.date || "");
   const [items, setItems] = useState<ItemRow[]>(itemsFrom(transaction));
@@ -113,7 +116,8 @@ export default function CardTransactionForm({
         : amount
           ? Number.parseFloat(amount.replace(",", "."))
           : undefined,
-      installment: useInstallment ? `1/${parsedCount}` : installment || null,
+      installment: useInstallment ? `1/${parsedCount}` : recurring ? null : existingInstallment,
+      recurring: !useInstallment && recurring,
       category: category || null,
       date: date || null,
       // Compra parcelada representa a 1ª parcela — sem itens (produtos) atrelados.
@@ -169,16 +173,41 @@ export default function CardTransactionForm({
               />
             </div>
 
+            {/* Parcelada e recorrente são excludentes: marcar um desmarca o outro. */}
             {!isEditing && (
               <div className="col-span-2">
                 <label className="flex items-center gap-2 text-xs font-medium cursor-pointer" style={{ color: "rgb(var(--text-soft))" }}>
                   <input
                     type="checkbox"
                     checked={installmentMode}
-                    onChange={(e) => setInstallmentMode(e.target.checked)}
+                    onChange={(e) => {
+                      setInstallmentMode(e.target.checked);
+                      if (e.target.checked) setRecurring(false);
+                    }}
                     className="accent-[rgb(var(--accent-strong))]"
                   />
                   Compra parcelada (dividir em N vezes)
+                </label>
+              </div>
+            )}
+
+            {isEditing && existingInstallment ? (
+              <div className="col-span-2 text-xs" style={{ color: "rgb(var(--text-soft))" }}>
+                Parcela <span style={{ color: "rgb(var(--accent))" }}>{existingInstallment}</span>
+              </div>
+            ) : (
+              <div className="col-span-2">
+                <label className="flex items-center gap-2 text-xs font-medium cursor-pointer" style={{ color: "rgb(var(--text-soft))" }}>
+                  <input
+                    type="checkbox"
+                    checked={recurring}
+                    onChange={(e) => {
+                      setRecurring(e.target.checked);
+                      if (e.target.checked) setInstallmentMode(false);
+                    }}
+                    className="accent-[rgb(var(--accent-strong))]"
+                  />
+                  Recorrente (assinatura — repete todo mês)
                 </label>
               </div>
             )}
@@ -220,33 +249,19 @@ export default function CardTransactionForm({
                 </div>
               </>
             ) : (
-              <>
-                <div>
-                  <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
-                    Valor *
-                  </label>
-                  <input
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    inputMode="decimal"
-                    className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
-                    placeholder="29,90"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
-                    Parcela
-                  </label>
-                  <input
-                    value={installment}
-                    onChange={(e) => setInstallment(e.target.value)}
-                    className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
-                    placeholder="3/12"
-                  />
-                </div>
-              </>
+              <div className="col-span-2">
+                <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
+                  Valor *
+                </label>
+                <input
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  inputMode="decimal"
+                  className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
+                  placeholder="29,90"
+                  required
+                />
+              </div>
             )}
 
             <div>

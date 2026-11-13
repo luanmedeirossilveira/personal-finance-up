@@ -101,7 +101,7 @@ export async function POST(
 
   try {
     const body = await req.json();
-    const { name, amount, installment, category, date } = body;
+    const { name, amount, installment, recurring, category, date } = body;
     const items = normalizeItems(body.items);
     const itemsSum = items.reduce((s, i) => s + i.amount, 0);
 
@@ -119,7 +119,9 @@ export async function POST(
       billId,
       name,
       amount: finalAmount,
-      installment: installment || null,
+      // Recorrente não tem parcela.
+      installment: recurring ? null : installment || null,
+      recurring: !!recurring,
       category: category || null,
       date: date || null,
     }).returning();

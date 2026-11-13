@@ -69,6 +69,11 @@ export async function PATCH(
         allowed[f] = body[f];
       }
     }
+    if (body.recurring !== undefined) {
+      allowed.recurring = !!body.recurring;
+      // Recorrente não tem parcela.
+      if (allowed.recurring) allowed.installment = null;
+    }
 
     // Substitui os itens (produtos) quando enviados
     let savedItems: unknown[] | undefined;

@@ -38,7 +38,7 @@ export default function MigrateModal({ migration }: Readonly<{ migration: Migrat
               Migrar para {MONTHS[migratePlan.nextMonth - 1]}/{migratePlan.nextYear}
             </h4>
             <p className="text-[11px] mt-1" style={{ color: "rgb(var(--text-muted))" }}>
-              Escolha o que levar para o próximo mês. Parcelas avançam +1.
+              Escolha o que levar para o próximo mês. Parcelas avançam +1; recorrentes se repetem.
             </p>
           </div>
 
@@ -73,15 +73,18 @@ export default function MigrateModal({ migration }: Readonly<{ migration: Migrat
             </div>
           )}
 
-          {/* Faturas de cartão com parcelas */}
+          {/* Faturas de cartão com parcelas e recorrentes */}
           {migratePlan.cards.length > 0 && (
             <div className="space-y-1.5">
               <span className="text-xs font-medium uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
-                Cartões — parcelas
+                Cartões — parcelas e recorrentes
               </span>
               {migratePlan.cards.map((card) => {
                 const sel = selectedParcelas[card.bill.id] ?? new Set<number>();
                 const allSelected = card.parcelas.every((p) => sel.has(p.id));
+                const recurringTotal = card.parcelas
+                  .filter((p) => p.recurring && sel.has(p.id))
+                  .reduce((sum, p) => sum + p.amount, 0);
                 const expanded = expandedMigrateCards.has(card.bill.id);
                 return (
                   <div key={card.bill.id} className="rounded bg-[rgb(var(--bg))]">
@@ -110,6 +113,11 @@ export default function MigrateModal({ migration }: Readonly<{ migration: Migrat
                         )}
                       </button>
                     </div>
+                    {recurringTotal > 0 && (
+                      <div className="px-2 pb-1 pl-8 text-[11px]" style={{ color: "rgb(var(--text-muted))" }}>
+                        Assinaturas: {BRL(recurringTotal)}/mês
+                      </div>
+                    )}
                     {expanded && (
                       <div className="px-2 pb-2 space-y-1">
                         {card.parcelas.map((p) => (
@@ -126,7 +134,7 @@ export default function MigrateModal({ migration }: Readonly<{ migration: Migrat
                             <span className="flex-1 min-w-0 text-xs truncate" style={{ color: "rgb(var(--text))" }}>
                               {p.name}
                               <span className="ml-1" style={{ color: "rgb(var(--accent))" }}>
-                                {p.installment ?? "?"} → {p.nextInstallment}
+                                {p.recurring ? "Recorrente" : `${p.installment ?? "?"} → ${p.nextInstallment}`}
                               </span>
                             </span>
                             <span className="text-xs" style={{ color: "rgb(var(--text-soft))" }}>{BRL(p.amount)}</span>

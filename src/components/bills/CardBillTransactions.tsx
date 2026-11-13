@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Plus, Pencil, Trash2, Receipt, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Pencil, Trash2, Receipt, ChevronDown, ChevronUp, Repeat } from "lucide-react";
 import CardTransactionForm, { type CardTransactionItem } from "./CardTransactionForm";
 
 interface CardTransaction {
@@ -9,6 +9,7 @@ interface CardTransaction {
   name: string;
   amount: number;
   installment?: string | null;
+  recurring?: boolean;
   category?: string | null;
   date?: string | null;
   items?: CardTransactionItem[];
@@ -77,6 +78,9 @@ export default function CardBillTransactions({
   }
 
   const total = transactions.reduce((sum, t) => sum + t.amount, 0);
+  const recurringTotal = transactions
+    .filter((t) => t.recurring)
+    .reduce((sum, t) => sum + t.amount, 0);
 
   if (loading) {
     return (
@@ -92,6 +96,11 @@ export default function CardBillTransactions({
       <div className="flex items-center justify-between py-2">
         <span className="text-xs font-medium uppercase tracking-wide" style={{ color: "rgb(var(--text-muted))" }}>
           Transações ({transactions.length})
+          {recurringTotal > 0 && (
+            <span className="ml-2 normal-case tracking-normal" style={{ color: "rgb(var(--accent))" }}>
+              • Recorrentes: {BRL(recurringTotal)}
+            </span>
+          )}
         </span>
         <button
           onClick={() => {
@@ -125,6 +134,12 @@ export default function CardBillTransactions({
                       {t.name}
                     </div>
                     <div className="flex items-center gap-2 text-xs" style={{ color: "rgb(var(--text-muted))" }}>
+                      {t.recurring && (
+                        <span className="flex items-center gap-0.5" style={{ color: "rgb(var(--accent))" }}>
+                          <Repeat size={11} />
+                          Recorrente
+                        </span>
+                      )}
                       {t.installment && <span>{t.installment}</span>}
                       {t.category && <span>• {t.category}</span>}
                       {t.date && <span>• {new Date(t.date).toLocaleDateString("pt-BR")}</span>}

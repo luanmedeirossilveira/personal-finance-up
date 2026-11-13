@@ -50,6 +50,8 @@ export const cardTransactions = sqliteTable("card_transactions", {
   name: text("name").notNull(),
   amount: real("amount").notNull(),
   installment: text("installment"),
+  // Assinatura/recorrente: repetida na fatura do próximo mês ao migrar (sem parcela).
+  recurring: integer("recurring", { mode: "boolean" }).notNull().default(false),
   category: text("category"),
   date: text("date"),
   createdAt: text("created_at").default(sql`(datetime('now'))`),

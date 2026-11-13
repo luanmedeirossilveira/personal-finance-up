@@ -65,10 +65,11 @@ export async function POST(req: NextRequest) {
       type === "CARD" && Array.isArray(body.transactions) ? body.transactions : [];
     const transactions = rawTransactions
       .filter((t: { name?: unknown; amount?: unknown }) => t && t.name)
-      .map((t: { name: string; amount: unknown; installment?: unknown; category?: unknown; date?: unknown }) => ({
+      .map((t: { name: string; amount: unknown; installment?: unknown; recurring?: unknown; category?: unknown; date?: unknown }) => ({
         name: String(t.name),
         amount: Number.parseFloat(String(t.amount)),
-        installment: t.installment ? String(t.installment) : null,
+        installment: t.recurring ? null : t.installment ? String(t.installment) : null,
+        recurring: !!t.recurring,
         category: t.category ? String(t.category) : null,
         date: t.date ? String(t.date) : null,
       }))
@@ -106,11 +107,12 @@ export async function POST(req: NextRequest) {
 
     if (transactions.length > 0) {
       await db.insert(schema.cardTransactions).values(
-        transactions.map((t: { name: string; amount: number; installment: string | null; category: string | null; date: string | null }) => ({
+        transactions.map((t: { name: string; amount: number; installment: string | null; recurring: boolean; category: string | null; date: string | null }) => ({
           billId: bill.id,
           name: t.name,
           amount: t.amount,
           installment: t.installment,
+          recurring: t.recurring,
           category: t.category,
           date: t.date,
         })),

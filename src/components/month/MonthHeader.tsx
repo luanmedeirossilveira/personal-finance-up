@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Copy, MoreHorizontal, Plus } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, ClipboardCopy, Copy, MoreHorizontal, Plus } from "lucide-react";
 import { BRL, MONTHS } from "@/lib/month";
 import type { BillSort, OwnershipFilter } from "./types";
 
@@ -31,6 +31,8 @@ export default function MonthHeader({
   onMigrate,
   migrateLabel,
   migrateDisabled,
+  onExport,
+  exportLabel,
   closed = false,
   income,
   outflow,
@@ -52,6 +54,9 @@ export default function MonthHeader({
   onMigrate: () => void;
   migrateLabel: string;
   migrateDisabled: boolean;
+  /** Copia o mês em Markdown para colar no Claude. */
+  onExport: () => void;
+  exportLabel: string;
   closed?: boolean;
   income: number;
   outflow: number;
@@ -158,6 +163,17 @@ export default function MonthHeader({
                   >
                     <Copy size={15} />
                     {migrateLabel}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onExport();
+                    }}
+                    className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm text-left hover:bg-fg/5"
+                    style={{ color: "rgb(var(--text-soft))" }}
+                  >
+                    <ClipboardCopy size={15} />
+                    {exportLabel}
                   </button>
                 </div>
               </>

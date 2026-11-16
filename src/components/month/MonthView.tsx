@@ -6,6 +6,7 @@ import BillForm from "@/components/bills/BillForm";
 import CategoryBudgets from "@/components/bills/CategoryBudgets";
 import MealCardsManager from "@/components/meal-cards/MealCardsManager";
 import Tabs from "@/components/ui/Tabs";
+import showToast from "@/components/ui/toast";
 import BillsTab from "./BillsTab";
 import CloseMonth from "./CloseMonth";
 import SalariesManager from "@/components/salaries/SalariesManager";
@@ -55,6 +56,33 @@ export default function MonthView({ workingPeriod }: Readonly<{ workingPeriod?: 
   const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>("all");
   const [sortBy, setSortBy] = useState<BillSort>("date");
   const [formBill, setFormBill] = useState<Bill | null | undefined>(undefined);
+  const [exporting, setExporting] = useState(false);
+
+  // Markdown do mês para colar no Claude; sem acesso à área de transferência, baixa o arquivo.
+  async function exportForAI() {
+    setExporting(true);
+    try {
+      const res = await fetch(`/api/month-export?month=${month}&year=${year}`);
+      if (!res.ok) throw new Error();
+      const text = await res.text();
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("Dados do mês copiados — cole no Claude.");
+      } catch {
+        const url = URL.createObjectURL(new Blob([text], { type: "text/markdown" }));
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `mes-${year}-${String(month).padStart(2, "0")}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("Arquivo do mês baixado.");
+      }
+    } catch {
+      showToast("Não foi possível gerar os dados do mês.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   function changeTab(next: MonthTab) {
     setTab(next);
@@ -97,6 +125,8 @@ export default function MonthView({ workingPeriod }: Readonly<{ workingPeriod?: 
           migration.migrating ? "Migrando..." : migration.preparingMigration ? "Preparando..." : "Migrar para o próximo mês"
         }
         migrateDisabled={migration.migrating || migration.preparingMigration || bills.length === 0}
+        onExport={exportForAI}
+        exportLabel={exporting ? "Gerando..." : "Copiar para IA"}
         closed={closed}
         income={income}
         outflow={outflow}

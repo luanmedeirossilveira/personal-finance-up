@@ -4,9 +4,8 @@ import { db, schema } from "@/lib/db";
 import { eq, and } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 import { CLOSED_MONTH_ERROR, isMonthClosed } from "@/lib/month-closing";
+import { VALID_OWNERSHIP, createBill } from "@/lib/bills";
 import type { BillOwnership } from "@/lib/db/schema";
-
-const VALID_OWNERSHIP: BillOwnership[] = ["mine", "hers", "joint"];
 
 export async function GET(req: NextRequest) {
   const user = await getSession();
@@ -46,11 +45,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const {
-      name, amount, month, year, installment, isPaid, dueDay,
-      category, notes, barCode, qrCode, type, cardLast4, cardNickname,
-      ownership, date, investmentId,
-    } = body;
+    const { name, amount, month, year } = body;
 
     if (!name || amount === undefined || !month || !year) {
       return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
@@ -59,65 +54,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(CLOSED_MONTH_ERROR, { status: 409 });
     }
 
-    // Transações (parcelas) opcionais para faturas CARD — usadas pela migração de mês
-    // para carregar cada parcela como uma linha real na fatura do próximo mês.
-    const rawTransactions =
-      type === "CARD" && Array.isArray(body.transactions) ? body.transactions : [];
-    const transactions = rawTransactions
-      .filter((t: { name?: unknown; amount?: unknown }) => t && t.name)
-      .map((t: { name: string; amount: unknown; installment?: unknown; recurring?: unknown; category?: unknown; date?: unknown }) => ({
-        name: String(t.name),
-        amount: Number.parseFloat(String(t.amount)),
-        installment: t.recurring ? null : t.installment ? String(t.installment) : null,
-        recurring: !!t.recurring,
-        category: t.category ? String(t.category) : null,
-        date: t.date ? String(t.date) : null,
-      }))
-      .filter((t: { amount: number }) => Number.isFinite(t.amount));
-
-    // Quando há transações, o total da fatura é a soma delas (fonte de verdade única).
-    const finalAmount = transactions.length
-      ? transactions.reduce((sum: number, t: { amount: number }) => sum + t.amount, 0)
-      : parseFloat(amount);
-
-    const finalCategory = type === "CARD" ? "cartão" : category;
-    const finalOwnership: BillOwnership =
-      ownership && VALID_OWNERSHIP.includes(ownership) ? ownership : "joint";
-
-    const [bill] = await db.insert(schema.bills).values({
-      userId: user.id,
-      name,
-      amount: finalAmount,
-      month,
-      year,
-      installment,
-      isPaid: isPaid || false,
-      dueDay,
-      category: finalCategory,
-      ownership: finalOwnership,
-      notes,
-      barCode,
-      qrCode,
-      type: type || "NORMAL",
-      cardLast4: type === "CARD" ? cardLast4 : null,
-      cardNickname: type === "CARD" ? cardNickname : null,
-      date: date || null,
-      investmentId: investmentId ? Number(investmentId) : null,
-    }).returning();
-
-    if (transactions.length > 0) {
-      await db.insert(schema.cardTransactions).values(
-        transactions.map((t: { name: string; amount: number; installment: string | null; recurring: boolean; category: string | null; date: string | null }) => ({
-          billId: bill.id,
-          name: t.name,
-          amount: t.amount,
-          installment: t.installment,
-          recurring: t.recurring,
-          category: t.category,
-          date: t.date,
-        })),
-      );
-    }
+    const bill = await createBill(user.id, body);
 
     return NextResponse.json(bill, { status: 201 });
   } catch (error) {

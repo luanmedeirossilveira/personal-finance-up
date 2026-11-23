@@ -6,6 +6,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { saveNetWorthSnapshot } from "@/lib/networth";
 import { syncUser } from "@/lib/pluggy/sync";
+import { sendDueAlerts } from "@/lib/whatsapp/alerts";
 
 // v3: o sync diário do Pluggy reaproveita este cron (evita estourar o limite de crons do Hobby).
 export const maxDuration = 60;
@@ -126,5 +127,8 @@ export async function GET(req: NextRequest) {
     sync = { error: (e as Error).message };
   }
 
-  return NextResponse.json({ ok: true, processed: { dueSoon: dueSoon.length, isMonthStart: day === 1 }, sync });
+  // Aviso de vencimento pelo WhatsApp (hoje e amanhã). Reaproveita este cron em vez de criar outro.
+  const whatsapp = await sendDueAlerts(adminUser.id);
+
+  return NextResponse.json({ ok: true, processed: { dueSoon: dueSoon.length, isMonthStart: day === 1 }, sync, whatsapp });
 }

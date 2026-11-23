@@ -40,6 +40,8 @@ export const bills = sqliteTable("bills", {
   date: text("date"),
   // v3: aporte vinculado a um investimento (categoria investimentos). FK na migration 0017.
   investmentId: integer("investment_id"),
+  // Origem do lançamento: "whatsapp" permite filtrar e revisar o que entrou pelo assistente.
+  source: text("source", { enum: ["manual", "whatsapp"] }).notNull().default("manual"),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").default(sql`(datetime('now'))`),
 });
@@ -323,6 +325,29 @@ export const monthClosings = sqliteTable("month_closings", {
   closedAt: text("closed_at").default(sql`(datetime('now'))`),
 });
 
+// Assistente via WhatsApp: log das mensagens (idempotência por message_id do gateway e
+// controle de aviso diário) e a ação pendente de confirmação (uma por usuário).
+export const waMessages = sqliteTable("wa_messages", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  // Nulo nas mensagens proativas (avisos do cron), que não vêm do gateway.
+  messageId: text("message_id").unique(),
+  direction: text("direction", { enum: ["in", "out"] }).notNull(),
+  text: text("text").notNull(),
+  intent: text("intent"),
+  reply: text("reply"),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
+export const waPendingActions = sqliteTable("wa_pending_actions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  type: text("type", { enum: ["registrar_gasto"] }).notNull(),
+  payload: text("payload").notNull().default("{}"),
+  expiresAt: text("expires_at").notNull(),
+  createdAt: text("created_at").default(sql`(datetime('now'))`),
+});
+
 // Relations
 export const historyDebtsRelations = relations(historyDebts, ({ one, many }) => ({
   user: one(users, { fields: [historyDebts.userId], references: [users.id] }),
@@ -391,6 +416,8 @@ export type Insight = typeof insights.$inferSelect;
 export type MonthClosing = typeof monthClosings.$inferSelect;
 export type Card = typeof cards.$inferSelect;
 export type NewInsight = typeof insights.$inferInsert;
+export type WaMessage = typeof waMessages.$inferSelect;
+export type WaPendingAction = typeof waPendingActions.$inferSelect;
 
 export const INVESTMENT_TYPES = ["cdb", "tesouro", "lci_lca", "fundo", "acao", "previdencia", "outro"] as const;
 

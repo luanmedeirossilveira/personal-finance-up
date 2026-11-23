@@ -49,7 +49,8 @@ export async function writeInsightsWithGemini(facts: Fact[]): Promise<WrittenIns
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.GEMINI_API_KEY}` },
     body: JSON.stringify({
-      model: process.env.GEMINI_MODEL,
+      // GEMINI_MODEL pode ser uma lista (o assistente do WhatsApp alterna entre eles); aqui vai o primeiro.
+      model: process.env.GEMINI_MODEL?.split(",")[0].trim(),
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: `Fatos da semana:\n${JSON.stringify(payload)}` },

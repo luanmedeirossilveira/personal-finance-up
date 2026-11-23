@@ -9,6 +9,7 @@ const PUBLIC_PATHS = [
   "/api/cron",
   "/api/auth/forgot",
   "/api/auth/reset",
+  "/api/whatsapp/inbound", // autentica por HMAC do gateway
 ];
 const STATIC_PATHS = ["/_next", "/favicon", "/icons/", "/manifest.json", "/sw.js"];
 

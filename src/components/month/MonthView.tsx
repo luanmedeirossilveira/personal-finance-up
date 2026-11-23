@@ -7,6 +7,7 @@ import CategoryBudgets from "@/components/bills/CategoryBudgets";
 import MealCardsManager from "@/components/meal-cards/MealCardsManager";
 import Tabs from "@/components/ui/Tabs";
 import showToast from "@/components/ui/toast";
+import { summarizeMonth } from "@/lib/month";
 import BillsTab from "./BillsTab";
 import CloseMonth from "./CloseMonth";
 import SalariesManager from "@/components/salaries/SalariesManager";
@@ -93,12 +94,9 @@ export default function MonthView({ workingPeriod }: Readonly<{ workingPeriod?: 
 
   // Aportes (categoria investimentos) saem de Saídas e ganham linha própria.
   const scoped = ownershipFilter === "all" ? bills : bills.filter((b) => b.ownership === ownershipFilter);
-  const invested = scoped.filter((b) => b.category === "investimentos").reduce((s, b) => s + b.amount, 0);
-  const outflow = scoped.reduce((s, b) => s + b.amount, 0) - invested;
-  const income = salaries.reduce((s, sal) => s + sal.amount, 0);
+  const { invested, outflow, income, pending: pendingTotal } = summarizeMonth(scoped, salaries);
 
   const pendingCount = bills.filter((b) => !b.isPaid).length;
-  const pendingTotal = scoped.filter((b) => !b.isPaid).reduce((s, b) => s + b.amount, 0);
   // Saldo atual só faz sentido no mês em andamento (o do período de trabalho ou o do calendário).
   const now = new Date();
   const isLive =

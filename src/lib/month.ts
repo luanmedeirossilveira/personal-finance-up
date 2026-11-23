@@ -83,3 +83,33 @@ export function statusColor(ratio: number) {
   if (ratio >= 0.8) return "rgb(var(--warning))";
   return "rgb(var(--accent))";
 }
+
+export interface MonthSummary {
+  income: number;
+  /** Saídas sem os aportes (categoria investimentos), como no cabeçalho do Mês. */
+  outflow: number;
+  invested: number;
+  pending: number;
+  pendingCount: number;
+  /** Saldo previsto: entradas − saídas − investido. */
+  balance: number;
+}
+
+// Mesma conta do cabeçalho do Mês e do "Saldo projetado" do Hoje.
+export function summarizeMonth(
+  bills: { amount: number; category?: string | null; isPaid?: boolean | null }[],
+  salaries: { amount: number }[],
+): MonthSummary {
+  const invested = bills.filter((b) => b.category === "investimentos").reduce((s, b) => s + b.amount, 0);
+  const outflow = bills.reduce((s, b) => s + b.amount, 0) - invested;
+  const income = salaries.reduce((s, sal) => s + sal.amount, 0);
+  const pendingBills = bills.filter((b) => !b.isPaid);
+  return {
+    income,
+    outflow,
+    invested,
+    pending: pendingBills.reduce((s, b) => s + b.amount, 0),
+    pendingCount: pendingBills.length,
+    balance: income - outflow - invested,
+  };
+}

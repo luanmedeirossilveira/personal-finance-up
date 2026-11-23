@@ -8,15 +8,9 @@ import { detectRisks } from "@/lib/risk";
 import { BRL, MONTHS, getNextMonthYear } from "@/lib/month";
 import { getWorkingPeriod } from "@/lib/month-closing";
 import { getMonthSpending } from "@/lib/month-spending";
+import { listUpcoming, type UpcomingItem } from "@/lib/upcoming";
 
-export interface UpcomingItem {
-  kind: "bill" | "future";
-  id: number;
-  name: string;
-  amount: number | null;
-  dueDate: string; // YYYY-MM-DD
-  overdue: boolean;
-}
+export type { UpcomingItem };
 
 export interface Ring {
   key: "budget" | "paid" | "invest";
@@ -69,9 +63,6 @@ export interface TodayData {
   cards: CardUsage[];
   suggestions: MatchSuggestion[];
 }
-
-const pad = (n: number) => String(n).padStart(2, "0");
-const isoDate = (y: number, m: number, d: number) => `${y}-${pad(m)}-${pad(d)}`;
 
 function billsOf(userId: number, month: number, year: number) {
   return db.query.bills.findMany({
@@ -138,36 +129,7 @@ export async function getTodayData(userId: number, now = new Date()): Promise<To
   const debtTotal = totalDebt(debts);
 
   // ── Próximos 7 dias (com vencidas do mês corrente no topo) ────────────────
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const todayStr = isoDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
-  const weekEnd = new Date(today);
-  weekEnd.setDate(weekEnd.getDate() + 7);
-  const weekEndStr = isoDate(weekEnd.getFullYear(), weekEnd.getMonth() + 1, weekEnd.getDate());
-
-  const seen = new Set<number>();
-  const candidates = [...prevBills, ...periodBills, ...afterBills].filter((b) => {
-    if (seen.has(b.id)) return false;
-    seen.add(b.id);
-    return !b.isPaid && !!b.dueDay;
-  });
-  const calMonth = today.getMonth() + 1;
-  const calYear = today.getFullYear();
-  const upcoming: UpcomingItem[] = candidates
-    .map((b) => {
-      const dueDate = isoDate(b.year, b.month, b.dueDay as number);
-      const overdue = dueDate < todayStr && b.month === calMonth && b.year === calYear;
-      return { kind: "bill" as const, id: b.id, name: b.name, amount: b.amount, dueDate, overdue };
-    })
-    .filter((u) => u.overdue || (u.dueDate >= todayStr && u.dueDate <= weekEndStr));
-
-  for (const f of futureBills) {
-    if (!f.reminderDate) continue;
-    const d = f.reminderDate.slice(0, 10);
-    if (d >= todayStr && d <= weekEndStr) {
-      upcoming.push({ kind: "future", id: f.id, name: f.name, amount: f.amount ?? null, dueDate: d, overdue: false });
-    }
-  }
-  upcoming.sort((a, b) => Number(b.overdue) - Number(a.overdue) || a.dueDate.localeCompare(b.dueDate));
+  const upcoming = listUpcoming([...prevBills, ...periodBills, ...afterBills], futureBills, now, 7);
 
   // ── Anéis: só onde há limite real ─────────────────────────────────────────
   const rings: Ring[] = [];

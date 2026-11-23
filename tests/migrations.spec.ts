@@ -74,3 +74,13 @@ describe('migrations v3 — transações recorrentes', () => {
     expect(sql).toContain('ALTER TABLE card_transactions ADD COLUMN recurring INTEGER NOT NULL DEFAULT 0');
   });
 });
+
+describe('migrations — assistente via WhatsApp', () => {
+  it('contains source column on bills and whatsapp tables', () => {
+    const sql = readFileSync('./drizzle/0023_add_whatsapp_assistant.sql', 'utf8');
+    expect(sql).toContain("ALTER TABLE bills ADD COLUMN source TEXT NOT NULL DEFAULT 'manual'");
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS wa_messages');
+    expect(sql).toContain('message_id  TEXT UNIQUE');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS wa_pending_actions');
+  });
+});

@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Check, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { ArrowRight, Check, ChevronRight, Trash2 } from "lucide-react";
 import showToast from "@/components/ui/toast";
 import showConfirm from "@/components/ui/confirm";
 import BillsMobileActions from "@/components/bills/BillsMobileActions";
-import CardBillTransactions from "@/components/bills/CardBillTransactions";
+import CardBillSheet from "@/components/bills/CardBillSheet";
 import { BRL, MONTHS, formatDateBR } from "@/lib/month";
 import type { Attachments, Bill, BillSort, FutureBill, OwnershipFilter } from "./types";
 import type { MonthData } from "./useMonthData";
@@ -36,7 +36,7 @@ function sortBills(bills: Bill[], sortBy: BillSort) {
   });
 }
 
-// Aba Contas: lista enxuta (nome, vencimento, valor, check de pago); fatura expande transações.
+// Aba Contas: lista enxuta (nome, vencimento, valor, check de pago); fatura abre em tela cheia.
 export default function BillsTab({
   data,
   ownershipFilter,
@@ -54,7 +54,8 @@ export default function BillsTab({
   onNew: () => void;
 }>) {
   const { bills, month, year, loading, monthFuture } = data;
-  const [expanded, setExpanded] = useState<number[]>([]);
+  const [openCardBillId, setOpenCardBillId] = useState<number | null>(null);
+  const openCardBill = openCardBillId === null ? null : bills.find((b) => b.id === openCardBillId) ?? null;
 
   const filtered = ownershipFilter === "all" ? bills : bills.filter((b) => b.ownership === ownershipFilter);
   const sorted = sortBills(filtered, sortBy);
@@ -104,7 +105,6 @@ export default function BillsTab({
           <div className="divide-y divide-line">
             {sorted.map((bill) => {
               const isCard = bill.type === "CARD";
-              const isExpanded = expanded.includes(bill.id);
               const overdue = isCurrentMonth && !bill.isPaid && !!bill.dueDay && bill.dueDay < today;
               const dueIn = isCurrentMonth && bill.dueDay ? bill.dueDay - today : null;
               const dueSoon = !bill.isPaid && dueIn !== null && dueIn >= 0 && dueIn <= 3;
@@ -172,16 +172,12 @@ export default function BillsTab({
 
                     {isCard && (
                       <button
-                        onClick={() =>
-                          setExpanded((prev) =>
-                            prev.includes(bill.id) ? prev.filter((id) => id !== bill.id) : [...prev, bill.id],
-                          )
-                        }
-                        aria-label={isExpanded ? "Recolher fatura" : "Ver transações da fatura"}
+                        onClick={() => setOpenCardBillId(bill.id)}
+                        aria-label="Ver transações da fatura"
                         className="p-1.5 rounded-lg transition-colors hover:bg-fg/5"
                         style={{ color: "rgb(var(--text-soft))" }}
                       >
-                        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        <ChevronRight size={16} />
                       </button>
                     )}
 
@@ -196,15 +192,6 @@ export default function BillsTab({
                     />
                     )}
                   </div>
-
-                  {isCard && isExpanded && (
-                    <div className="px-4 pb-3 ml-9" style={{ background: "rgb(var(--bg))" }}>
-                      <CardBillTransactions
-                        billId={bill.id}
-                        onTotalChange={(newTotal) => data.setBillAmount(bill.id, newTotal)}
-                      />
-                    </div>
-                  )}
                 </div>
               );
             })}
@@ -223,6 +210,15 @@ export default function BillsTab({
       )}
 
       {!locked && monthFuture.length > 0 && <PrevistoList items={monthFuture} data={data} />}
+
+      {openCardBill && (
+        <CardBillSheet
+          bill={openCardBill}
+          locked={locked}
+          onClose={() => setOpenCardBillId(null)}
+          onTotalChange={(newTotal) => data.setBillAmount(openCardBill.id, newTotal)}
+        />
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { eq, and, inArray } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
 import { CLOSED_MONTH_ERROR, isMonthClosed } from "@/lib/month-closing";
 import { normalizeItems } from "@/lib/items";
+import { sortCardTransactions } from "@/lib/card-transactions-shared";
 
 // Recalcula o total da bill baseado nas transações
 async function recalculateBillTotal(billId: number) {
@@ -48,10 +49,12 @@ export async function GET(
     return NextResponse.json({ error: "Esta conta não é do tipo cartão" }, { status: 400 });
   }
 
-  const transactions = await db.query.cardTransactions.findMany({
-    where: eq(schema.cardTransactions.billId, billId),
-    orderBy: (t, { desc }) => [desc(t.date), desc(t.id)],
-  });
+  // Ordem manual (position) primeiro; sem ela, data mais recente primeiro.
+  const transactions = sortCardTransactions(
+    await db.query.cardTransactions.findMany({
+      where: eq(schema.cardTransactions.billId, billId),
+    }),
+  );
 
   // Anexa os itens (produtos) de cada compra
   const txIds = transactions.map((t) => t.id);

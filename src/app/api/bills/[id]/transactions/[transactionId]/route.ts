@@ -74,6 +74,9 @@ export async function PATCH(
       // Recorrente não tem parcela.
       if (allowed.recurring) allowed.installment = null;
     }
+    if (body.checked !== undefined) {
+      allowed.checked = !!body.checked;
+    }
 
     // Substitui os itens (produtos) quando enviados
     let savedItems: unknown[] | undefined;

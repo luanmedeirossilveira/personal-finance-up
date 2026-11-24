@@ -56,6 +56,10 @@ export const cardTransactions = sqliteTable("card_transactions", {
   recurring: integer("recurring", { mode: "boolean" }).notNull().default(false),
   category: text("category"),
   date: text("date"),
+  // Ordem manual (para bater com o app do banco); nula = ordem padrão por data.
+  position: integer("position"),
+  // Conferida contra o extrato do banco.
+  checked: integer("checked", { mode: "boolean" }).notNull().default(false),
   createdAt: text("created_at").default(sql`(datetime('now'))`),
 });
 

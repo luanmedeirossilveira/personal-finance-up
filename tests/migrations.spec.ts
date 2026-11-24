@@ -84,3 +84,11 @@ describe('migrations — assistente via WhatsApp', () => {
     expect(sql).toContain('CREATE TABLE IF NOT EXISTS wa_pending_actions');
   });
 });
+
+describe('migrations — conferência da fatura', () => {
+  it('contains position and checked columns on card_transactions', () => {
+    const sql = readFileSync('./drizzle/0024_add_order_and_checked_to_card_transactions.sql', 'utf8');
+    expect(sql).toContain('ALTER TABLE card_transactions ADD COLUMN position INTEGER');
+    expect(sql).toContain('ALTER TABLE card_transactions ADD COLUMN checked INTEGER NOT NULL DEFAULT 0');
+  });
+});

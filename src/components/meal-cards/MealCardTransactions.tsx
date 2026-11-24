@@ -4,6 +4,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Plus, Pencil, Trash2, Receipt, ChevronDown, ChevronUp } from "lucide-react";
 import showConfirm from "@/components/ui/confirm";
+import { formatDateBR } from "@/lib/month";
 import MealCardTransactionForm, { type MealTransactionItem } from "./MealCardTransactionForm";
 
 interface MealTransaction {
@@ -126,7 +127,7 @@ export default function MealCardTransactions({
                       {t.date && (
                         <span>
                           {t.category ? "• " : ""}
-                          {new Date(t.date).toLocaleDateString("pt-BR")}
+                          {formatDateBR(t.date)}
                         </span>
                       )}
                       {hasItems && (

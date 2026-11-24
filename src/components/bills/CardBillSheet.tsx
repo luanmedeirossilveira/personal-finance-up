@@ -55,7 +55,7 @@ export default function CardBillSheet({
   onClose: () => void;
   onTotalChange?: (total: number) => void;
 }>) {
-  const { transactions, loading, fetchTransactions, toggleChecked, deleteTransaction, saveOrder } =
+  const { transactions, loading, loadError, fetchTransactions, toggleChecked, deleteTransaction, saveOrder } =
     useCardTransactions(bill.id, onTotalChange);
 
   const [query, setQuery] = useState("");
@@ -165,7 +165,7 @@ export default function CardBillSheet({
                 <div className="text-base font-bold truncate text-fg">{bill.name}</div>
                 <div className="flex items-center gap-2 text-xs text-fg-muted">
                   {bill.cardLast4 && <span>•••• {bill.cardLast4}</span>}
-                  <span className="font-numeric text-fg">{BRL(total)}</span>
+                  {!loadError && <span className="font-numeric text-fg">{BRL(total)}</span>}
                 </div>
               </div>
               <button onClick={onClose} aria-label="Fechar fatura" className="p-2 rounded-lg text-fg-soft hover:bg-fg/5">
@@ -284,6 +284,13 @@ export default function CardBillSheet({
           <div ref={listRef} className="flex-1 overflow-y-auto overscroll-contain">
             {loading ? (
               <div className="p-6 text-center text-sm text-fg-muted">Carregando transações...</div>
+            ) : loadError ? (
+              <div className="p-6 text-center text-sm space-y-2">
+                <p className="text-negative">{loadError}</p>
+                <button onClick={fetchTransactions} className="underline text-accent">
+                  Tentar de novo
+                </button>
+              </div>
             ) : visible.length === 0 ? (
               <div className="p-6 text-center text-sm text-fg-muted space-y-2">
                 <p>{transactions.length === 0 ? "Nenhuma transação cadastrada" : "Nenhuma transação encontrada"}</p>

@@ -30,19 +30,26 @@ async function errorMessage(res: Response, fallback: string) {
 export function useCardTransactions(billId: number, onTotalChange?: (total: number) => void) {
   const [transactions, setTransactions] = useState<CardTransaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
+  // Falha ao carregar não é "fatura vazia": mostra o erro e não mexe no total da conta.
   const fetchTransactions = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/bills/${billId}/transactions`);
-      // API retornou erro (ex: bill não é do tipo CARD)
-      const data = res.ok ? await res.json() : [];
-      const list: CardTransaction[] = Array.isArray(data) ? data : [];
-      setTransactions(list);
-      onTotalChange?.(list.reduce((sum, t) => sum + t.amount, 0));
-    } catch {
-      setTransactions([]);
-      showToast("Não foi possível carregar as transações.");
+    const res = await fetch(`/api/bills/${billId}/transactions`).catch(() => null);
+    if (!res?.ok) {
+      setLoadError(res ? await errorMessage(res, "Não foi possível carregar as transações.") : "Sem conexão.");
+      setLoading(false);
+      return;
     }
+    const data = await res.json().catch(() => null);
+    if (!Array.isArray(data)) {
+      setLoadError("Não foi possível carregar as transações.");
+      setLoading(false);
+      return;
+    }
+    const list: CardTransaction[] = data;
+    setLoadError(null);
+    setTransactions(list);
+    onTotalChange?.(list.reduce((sum, t) => sum + t.amount, 0));
     setLoading(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [billId]);
@@ -90,5 +97,5 @@ export function useCardTransactions(billId: number, onTotalChange?: (total: numb
     return true;
   }
 
-  return { transactions, loading, fetchTransactions, toggleChecked, deleteTransaction, saveOrder };
+  return { transactions, loading, loadError, fetchTransactions, toggleChecked, deleteTransaction, saveOrder };
 }

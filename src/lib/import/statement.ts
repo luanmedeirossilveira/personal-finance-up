@@ -129,11 +129,13 @@ export function parseStatement(fileName: string, text: string) {
 
 const CATEGORY_HINTS: [RegExp, string][] = [
   [/mercado|supermerc|padaria|ifood|restaurante|lanchonete|acougue|hortifruti/i, "alimentação"],
+  [/ipva|licenciamento|detran|seguro auto|oficina|mecanic|financiamento veic/i, "carro"],
   [/uber|99 ?app|posto|combust|shell|ipiranga|estaciona|pedagio|sem parar/i, "transporte"],
   [/farmacia|drogaria|droga raia|hospital|clinica|laborat|unimed/i, "saude"],
   [/netflix|spotify|prime|disney|hbo|max\b|youtube|icloud|google one|assinatura/i, "assinaturas"],
   [/aluguel|condominio|energia|enel|sabesp|luz|agua|gas |internet|vivo|claro|tim\b/i, "moradia"],
-  [/cinema|show|ingresso|bar\b|viagem|hotel|airbnb/i, "lazer"],
+  [/viagem|passagem|hotel|airbnb|booking|decolar|latam|gol linhas|azul linhas|cvc/i, "viagem"],
+  [/cinema|show|ingresso|bar\b/i, "lazer"],
   [/renner|zara|riachuelo|c&a|shein|roupa|calcado/i, "vestuário"],
   [/salao|barbearia|cosmet|boticario|natura|sephora/i, "beleza"],
   [/tesouro|cdb|aplicacao|investimento|corretora/i, "investimentos"],

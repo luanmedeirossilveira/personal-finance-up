@@ -45,4 +45,14 @@ describe('whatsapp: resolução de categoria', () => {
     expect(guessCategoryFromText('presente da mãe')).toBe('compras');
     expect(guessCategoryFromText('coisa aleatória')).toBeNull();
   });
+
+  it('separa carro e viagem de transporte e lazer', () => {
+    expect(resolveCategory('ipva')).toEqual({ kind: 'match', category: 'carro' });
+    expect(resolveCategory('carro')).toEqual({ kind: 'match', category: 'carro' });
+    expect(guessCategoryFromText('mecânico do carro')).toBe('carro');
+    expect(resolveCategory('viagem')).toEqual({ kind: 'match', category: 'viagem' });
+    expect(resolveCategory('hotel')).toEqual({ kind: 'match', category: 'viagem' });
+    expect(resolveCategory('posto')).toEqual({ kind: 'match', category: 'transporte' });
+    expect(resolveCategory('cinema')).toEqual({ kind: 'match', category: 'lazer' });
+  });
 });

@@ -4,6 +4,8 @@ import type { Bill } from "@/components/month/types";
 import { Check, CreditCard, Receipt } from "lucide-react";
 import type { BillOwnership } from "@/lib/db/schema";
 import ModalPortal from "@/components/ui/ModalPortal";
+import NameAutocomplete from "@/components/ui/NameAutocomplete";
+import type { NameSuggestion } from "@/lib/name-suggestions-shared";
 import { BILL_FORM_CATEGORIES, categoryLabel } from "@/lib/categories";
 
 
@@ -88,6 +90,14 @@ export default function BillForm({
       .catch(() => setInvestments([]));
   }, [category, investments.length]);
   const canBeFuture = !bill && type === "NORMAL";
+
+  // Sugestão do histórico de contas: completa a categoria e, se o valor se repete, o valor.
+  // Só preenche o que está vazio.
+  function pickSuggestion(s: NameSuggestion) {
+    setName(s.name);
+    if (!category && s.category && (BILL_FORM_CATEGORIES as readonly string[]).includes(s.category)) setCategory(s.category);
+    if (!amount && s.fixedAmount != null) setAmount(String(s.fixedAmount));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -285,9 +295,12 @@ export default function BillForm({
               >
                 {type === "CARD" ? "Nome da fatura *" : "Nome *"}
               </label>
-              <input
+              <NameAutocomplete
+                source="bill"
+                enabled={type === "NORMAL"}
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={setName}
+                onPick={pickSuggestion}
                 className="input-base"
                 placeholder={
                   type === "CARD" ? "FATURA NUBANK ABR/2026" : "ALUGUEL"

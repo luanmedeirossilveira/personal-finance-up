@@ -36,4 +36,13 @@ describe('importação de extrato', () => {
     expect(suggestCategory('DROGARIA SÃO PAULO')).toBe('saude');
     expect(suggestCategory('TRANSFERENCIA')).toBeNull();
   });
+
+  it('separa carro e viagem de transporte e lazer', () => {
+    expect(suggestCategory('IPVA 2026 COTA 1')).toBe('carro');
+    expect(suggestCategory('OFICINA MECÂNICA DO ZÉ')).toBe('carro');
+    expect(suggestCategory('AIRBNB * HMXYZ')).toBe('viagem');
+    expect(suggestCategory('LATAM AIRLINES 3/10')).toBe('viagem');
+    expect(suggestCategory('UBER *TRIP')).toBe('transporte');
+    expect(suggestCategory('CINEMARK')).toBe('lazer');
+  });
 });

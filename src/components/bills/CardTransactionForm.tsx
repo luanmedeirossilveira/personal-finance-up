@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { CARD_TX_CATEGORIES, categoryLabel, normalizeCategory } from "@/lib/categories";
 import ModalPortal from "@/components/ui/ModalPortal";
+import NameAutocomplete from "@/components/ui/NameAutocomplete";
+import type { NameSuggestion } from "@/lib/name-suggestions-shared";
 
 export interface CardTransactionItem {
   id?: number;
@@ -83,6 +85,15 @@ export default function CardTransactionForm({
   const perInstallment =
     parsedCount > 0 ? Math.round((parsedTotal / parsedCount) * 100) / 100 : 0;
   const installmentValid = parsedTotal > 0 && parsedCount >= 2;
+
+  // Sugestão do histórico: completa a categoria e, se o valor se repete (assinatura), o valor.
+  // Só preenche o que está vazio.
+  function pickSuggestion(s: NameSuggestion) {
+    setName(s.name);
+    const cat = s.category ? normalizeCategory(s.category) : null;
+    if (!category && cat && (CARD_TX_CATEGORIES as readonly string[]).includes(cat)) setCategory(cat);
+    if (!amount && !installmentMode && s.fixedAmount != null) setAmount(String(s.fixedAmount));
+  }
 
   function updateItem(index: number, patch: Partial<ItemRow>) {
     setItems((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
@@ -164,9 +175,11 @@ export default function CardTransactionForm({
               <label className="block text-xs font-medium mb-1 uppercase tracking-wide" style={{ color: "rgb(var(--text-soft))" }}>
                 Descrição *
               </label>
-              <input
+              <NameAutocomplete
+                source="card"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={setName}
+                onPick={pickSuggestion}
                 className="w-full p-2 rounded bg-[rgb(var(--bg))] text-sm"
                 placeholder="SPOTIFY"
                 required

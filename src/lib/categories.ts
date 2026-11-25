@@ -1,13 +1,17 @@
 // Categorias de gasto — uma lista só para contas, compras no cartão de crédito, limites e importação.
 // Sem dependências de servidor (usada no cliente).
+// Carro (financiamento, IPVA, licenciamento) e Viagem (parcelas) ficam fora de Transporte e Lazer:
+// são compromissos já assumidos, e assim essas duas mostram só o que ainda dá para controlar no mês.
 
 export const SPENDING_CATEGORIES = [
   "moradia",
   "alimentação",
   "transporte",
+  "carro",
   "saude",
   "compras",
   "lazer",
+  "viagem",
   "assinaturas",
   "vestuário",
   "beleza",
@@ -22,9 +26,11 @@ export const CATEGORY_CONFIG: Record<SpendingCategory, { label: string; emoji: s
   moradia: { label: "Moradia", emoji: "🏠" },
   alimentação: { label: "Alimentação", emoji: "🍽️" },
   transporte: { label: "Transporte", emoji: "🚗" },
+  carro: { label: "Carro", emoji: "🚙" },
   saude: { label: "Saúde", emoji: "❤️" },
   compras: { label: "Compras", emoji: "🛍️" },
   lazer: { label: "Lazer", emoji: "🎉" },
+  viagem: { label: "Viagem (parcelas)", emoji: "✈️" },
   assinaturas: { label: "Assinaturas", emoji: "📺" },
   vestuário: { label: "Vestuário", emoji: "👗" },
   beleza: { label: "Beleza", emoji: "💄" },

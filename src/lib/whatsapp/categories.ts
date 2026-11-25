@@ -27,7 +27,11 @@ const KEYWORDS: Record<string, SpendingCategory> = {
   metro: "transporte",
   estacionamento: "transporte",
   pedagio: "transporte",
-  mecanico: "transporte",
+  mecanico: "carro",
+  oficina: "carro",
+  ipva: "carro",
+  licenciamento: "carro",
+  detran: "carro",
   supermercado: "alimentação",
   mercado: "alimentação",
   feira: "alimentação",
@@ -63,8 +67,11 @@ const KEYWORDS: Record<string, SpendingCategory> = {
   cinema: "lazer",
   bar: "lazer",
   show: "lazer",
-  viagem: "lazer",
   passeio: "lazer",
+  passagem: "viagem",
+  hotel: "viagem",
+  airbnb: "viagem",
+  voo: "viagem",
   salao: "beleza",
   cabelo: "beleza",
   manicure: "beleza",
@@ -111,6 +118,10 @@ export function resolveCategory(raw: string | null | undefined, allowed: readonl
   // Frase ("gasto com mercado"): primeira palavra que bate exata ou por apelido.
   const fromWords = guessCategoryFromText(text, allowed);
   if (fromWords) return { kind: "match", category: fromWords };
+
+  // Categoria conhecida, mas fora da lista permitida ("cartão" num gasto novo): não aproxima para
+  // outra parecida ("cartão" → "carro").
+  if (FOLDED.some((c) => c.key === text) || normalizeCategory(text) !== "outros") return { kind: "none" };
 
   // Aproximado: prefixo (≥ 3 letras) ou até 2 letras de diferença; empate → ambíguo.
   const pool = FOLDED.filter((c) => allowed.includes(c.category));

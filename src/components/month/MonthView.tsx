@@ -16,6 +16,7 @@ import CardPlans from "./CardPlans";
 import MigrateModal from "./MigrateModal";
 import MonthHeader from "./MonthHeader";
 import { useMigration } from "./useMigration";
+import { useBudgetProjection } from "./useBudgetProjection";
 import { useMonthData } from "./useMonthData";
 import type { Bill, BillSort, OwnershipFilter } from "./types";
 
@@ -51,6 +52,9 @@ export default function MonthView({ workingPeriod }: Readonly<{ workingPeriod?: 
       .catch(() => setMeal(null));
   }, [month, year, data.version, spendingKey]);
   const migration = useMigration(bills, month, year);
+  // Limites salvos na aba Categorias → saldo projetado recalcula.
+  const [budgetsKey, setBudgetsKey] = useState(0);
+  const budgetRemaining = useBudgetProjection(month, year, `${data.version}-${spendingKey}-${budgetsKey}`);
 
   const initialTab = searchParams.get("tab") as MonthTab | null;
   const [tab, setTab] = useState<MonthTab>(initialTab && TABS.includes(initialTab) ? initialTab : "contas");
@@ -132,6 +136,8 @@ export default function MonthView({ workingPeriod }: Readonly<{ workingPeriod?: 
         pending={pendingTotal}
         bank={isLive ? data.bank : null}
         meal={meal}
+        // Limites não são por dono e mês fechado não tem mais o que gastar: sem projeção.
+        budgetRemaining={!closed && ownershipFilter === "all" ? budgetRemaining : null}
       />
 
       <Tabs
@@ -172,7 +178,13 @@ export default function MonthView({ workingPeriod }: Readonly<{ workingPeriod?: 
       {tab === "categorias" && (
         <>
           <CardPlans month={month} year={year} refreshKey={data.version} />
-          <CategoryBudgets month={month} year={year} refreshKey={`${data.version}-${spendingKey}`} defaultExpanded />
+          <CategoryBudgets
+            month={month}
+            year={year}
+            refreshKey={`${data.version}-${spendingKey}`}
+            defaultExpanded
+            onBudgetsChange={() => setBudgetsKey((k) => k + 1)}
+          />
         </>
       )}
 

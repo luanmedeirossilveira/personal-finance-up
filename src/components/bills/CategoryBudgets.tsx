@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Settings2, AlertTriangle, TrendingUp, ChevronDown } from "lucide-react";
 import { BILL_CATEGORIES } from "@/lib/db/schema";
 import { CATEGORY_CONFIG, type SpendingCategory } from "@/lib/categories";
+import { budgetStatus, type BudgetStatus } from "@/lib/category-budget-shared";
 import { formatDateBR } from "@/lib/month";
 import type { MonthSpending, SpendingLine } from "@/lib/month-spending";
 
@@ -21,7 +22,7 @@ interface CategorySummary {
   spent: number;
   budget: number | null;
   percent: number;
-  status: "ok" | "warning" | "over";
+  status: BudgetStatus;
 }
 
 interface Props {
@@ -30,12 +31,14 @@ interface Props {
   /** Muda quando contas/compras mudam, para recarregar o gasto do mês. */
   refreshKey?: string | number;
   defaultExpanded?: boolean;
+  /** Limites salvos: o Mês recalcula o saldo projetado. */
+  onBudgetsChange?: () => void;
 }
 
 const BRL = (v: number) =>
   `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
-export default function CategoryBudgets({ month, year, refreshKey, defaultExpanded = false }: Readonly<Props>) {
+export default function CategoryBudgets({ month, year, refreshKey, defaultExpanded = false, onBudgetsChange }: Readonly<Props>) {
   const [budgets, setBudgets] = useState<CategoryBudget[]>([]);
   const [spending, setSpending] = useState<MonthSpending | null>(null);
   const [openCategory, setOpenCategory] = useState<BillCategory | null>(null);
@@ -73,14 +76,7 @@ export default function CategoryBudgets({ month, year, refreshKey, defaultExpand
     const budgetEntry = budgets.find((b) => b.category === cat);
     const budget = budgetEntry?.amount ?? null;
     const percent = budget ? Math.min((spent / budget) * 100, 100) : 0;
-    const status: CategorySummary["status"] =
-      budget === null
-        ? "ok"
-        : spent > budget
-        ? "over"
-        : spent / budget >= 0.8
-        ? "warning"
-        : "ok";
+    const status = budgetStatus(spent, budget);
     return { category: cat, spent, budget, percent, status };
   }).filter((s) => s.spent > 0 || s.budget !== null);
 
@@ -111,6 +107,7 @@ export default function CategoryBudgets({ month, year, refreshKey, defaultExpand
     });
     await Promise.all(promises);
     await fetchBudgets();
+    onBudgetsChange?.();
     setSaving(false);
     setEditing(false);
   }
@@ -202,12 +199,15 @@ export default function CategoryBudgets({ month, year, refreshKey, defaultExpand
         <div className="space-y-3">
           {summaries.map(({ category, spent, budget, percent, status }) => {
             const cfg = CATEGORY_CONFIG[category];
-            const barColor =
+            // Dentro do limite é o planejado (verde); até 10% acima, amarelo; além disso, vermelho.
+            const statusColor =
               status === "over"
                 ? "rgb(var(--negative))"
                 : status === "warning"
                 ? "rgb(var(--warning))"
-                : "rgb(var(--text-muted))";
+                : status === "ok"
+                ? "rgb(var(--accent))"
+                : "rgb(var(--text))";
 
             return (
               <div key={category} className="space-y-1.5">
@@ -237,12 +237,7 @@ export default function CategoryBudgets({ month, year, refreshKey, defaultExpand
                     <span
                       className="text-xs font-bold font-numeric"
                       style={{
-                        color:
-                          status === "over"
-                            ? "rgb(var(--negative))"
-                            : status === "warning"
-                            ? "rgb(var(--warning))"
-                            : "rgb(var(--text))",
+                        color: statusColor,
                       }}
                     >
                       {BRL(spent)}
@@ -271,7 +266,7 @@ export default function CategoryBudgets({ month, year, refreshKey, defaultExpand
                       className="h-full rounded-full transition-all duration-500"
                       style={{
                         width: `${percent}%`,
-                        background: barColor,
+                        background: statusColor,
                         opacity: 0.9,
                       }}
                     />
@@ -286,7 +281,12 @@ export default function CategoryBudgets({ month, year, refreshKey, defaultExpand
                 )}
                 {status === "warning" && budget !== null && (
                   <p className="text-[10px]" style={{ color: "rgb(var(--warning))" }}>
-                    {Math.round(percent)}% do limite — restam {BRL(budget - spent)}
+                    {BRL(spent - budget)} acima do limite (até 10%)
+                  </p>
+                )}
+                {status === "ok" && budget !== null && spent > 0 && (
+                  <p className="text-[10px]" style={{ color: "rgb(var(--accent))" }}>
+                    {budget - spent < 0.01 ? "no limite" : `${Math.round(percent)}% do limite — restam ${BRL(budget - spent)}`}
                   </p>
                 )}
 

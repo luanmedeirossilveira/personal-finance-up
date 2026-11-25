@@ -1,6 +1,7 @@
 // Regras puras da fatura do cartão (sem DB): ordem, filtros e conferência.
 // A fatura é conferida contra o app do banco, que tem a ordem dele — por isso a
 // ordem manual (`position`) manda; sem ela, vale a ordem padrão (data mais recente primeiro).
+import { matchesNameOrAmount } from "@/lib/search-shared";
 
 export interface CardTxLike {
   id: number;
@@ -43,29 +44,13 @@ export function cardTxKind(t: CardTxLike): Exclude<CardTxKind, "all"> {
   return "avista";
 }
 
-const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-
-// "49,90", "49.90" e "49" acham 49.90; o resto busca no nome (sem acento/caixa).
-function matchesQuery(t: CardTxLike, query: string): boolean {
-  const q = fold(query.trim());
-  if (!q) return true;
-  if (fold(t.name).includes(q)) return true;
-  const numeric = q.replace(/^r\$\s*/, "").replace(/\s/g, "");
-  if (!/^\d+([.,]\d{0,2})?$/.test(numeric)) return false;
-  const [int, dec] = numeric.replace(",", ".").split(".");
-  const fixed = t.amount.toFixed(2);
-  const [tInt, tDec] = fixed.split(".");
-  if (int !== tInt) return false;
-  return !dec || tDec.startsWith(dec);
-}
-
 export function filterCardTransactions<T extends CardTxLike>(txs: T[], filter: CardTxFilter): T[] {
   const { query = "", kind = "all", onlyUnchecked = false } = filter;
   return txs.filter(
     (t) =>
       (kind === "all" || cardTxKind(t) === kind) &&
       (!onlyUnchecked || !t.checked) &&
-      matchesQuery(t, query),
+      matchesNameOrAmount(t, query),
   );
 }
 

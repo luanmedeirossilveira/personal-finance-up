@@ -1,4 +1,5 @@
 // Helpers compartilhados pelas telas Hoje e Mês.
+import { budgetRatioStatus } from "@/lib/category-budget-shared";
 
 export const MONTHS = [
   "Janeiro",
@@ -77,10 +78,12 @@ export function incrementStrictInstallment(installment?: string | null) {
   return `${current + 1}/${total}`;
 }
 
-// Cor do anel/barra por status: verde até 80%, âmbar até 100%, vermelho acima.
+// Cor do anel/barra por status: verde até 100% (gastar o limite é o planejado),
+// âmbar até 10% acima, vermelho além disso. Mesma faixa dos limites por categoria.
 export function statusColor(ratio: number) {
-  if (ratio > 1) return "rgb(var(--negative))";
-  if (ratio >= 0.8) return "rgb(var(--warning))";
+  const status = budgetRatioStatus(ratio);
+  if (status === "over") return "rgb(var(--negative))";
+  if (status === "warning") return "rgb(var(--warning))";
   return "rgb(var(--accent))";
 }
 

@@ -180,7 +180,7 @@ export default function CardPlans({ month, year, refreshKey }: Readonly<{ month:
                 )}
                 <div className="flex flex-wrap gap-x-3 text-[11px]" style={{ color: "rgb(var(--text-muted))" }}>
                   {c.monthlyLimit > 0 && (
-                    <span style={{ color: c.ratio !== null && c.ratio > 1 ? "rgb(var(--negative))" : undefined }}>
+                    <span style={{ color: c.ratio !== null && c.ratio > 1 ? statusColor(c.ratio) : undefined }}>
                       {c.ratio !== null && c.ratio > 1 ? `${BRL(c.used - c.monthlyLimit)} acima do planejado` : `restam ${BRL(c.monthlyLimit - c.used)}`}
                     </span>
                   )}

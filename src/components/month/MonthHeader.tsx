@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, ChevronLeft, ChevronRight, ClipboardCopy, Copy, MoreHorizontal, Plus } from "lucide-react";
+import { projectBalance } from "@/lib/category-budget-shared";
 import { BRL, MONTHS } from "@/lib/month";
 import type { BillSort, OwnershipFilter } from "./types";
 
@@ -40,6 +41,7 @@ export default function MonthHeader({
   pending = 0,
   bank = null,
   meal = null,
+  budgetRemaining = null,
 }: Readonly<{
   month: number;
   year: number;
@@ -67,9 +69,12 @@ export default function MonthHeader({
   bank?: { balance: number; syncedAt: string | null; label: string } | null;
   /** Cartões alimentação do mês: limite e gasto (saldo = limite − gasto). */
   meal?: { limit: number; spent: number; count: number } | null;
+  /** Quanto ainda falta gastar nos limites por categoria; null esconde o saldo projetado. */
+  budgetRemaining?: number | null;
 }>) {
   const [menuOpen, setMenuOpen] = useState(false);
   const balance = income - outflow - invested;
+  const boxCount = 1 + [bank, meal, budgetRemaining].filter((v) => v !== null).length;
 
   return (
     <div className="space-y-4">
@@ -209,7 +214,7 @@ export default function MonthHeader({
 
         <div
           className={`grid gap-3 pt-3 ${
-            [bank, meal].filter(Boolean).length === 2 ? "grid-cols-2 sm:grid-cols-3" : [bank, meal].some(Boolean) ? "grid-cols-2" : "grid-cols-1"
+            boxCount === 4 ? "grid-cols-2 sm:grid-cols-4" : boxCount === 3 ? "grid-cols-2 sm:grid-cols-3" : boxCount === 2 ? "grid-cols-2" : "grid-cols-1"
           }`}
           style={{ borderTop: "1px solid rgb(var(--border))" }}
         >
@@ -221,6 +226,13 @@ export default function MonthHeader({
             />
           )}
           <BalanceBox label="Saldo previsto" value={balance} note="entradas − saídas − investido do mês" />
+          {budgetRemaining !== null && (
+            <BalanceBox
+              label="Saldo projetado"
+              value={projectBalance(balance, budgetRemaining)}
+              note={budgetRemaining > 0 ? `previsto − ${BRL(budgetRemaining)} que falta nos limites` : "limites já atingidos"}
+            />
+          )}
           {meal && (
             <BalanceBox
               label="Saldo alimentação"

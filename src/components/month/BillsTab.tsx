@@ -1,11 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Check, ChevronRight, Trash2 } from "lucide-react";
+import { ArrowRight, Check, ChevronRight, Search, Trash2, X } from "lucide-react";
+import Chip from "@/components/ui/Chip";
 import showToast from "@/components/ui/toast";
 import showConfirm from "@/components/ui/confirm";
 import BillsMobileActions from "@/components/bills/BillsMobileActions";
 import CardBillSheet from "@/components/bills/CardBillSheet";
+import {
+  type BillFilter,
+  type BillStatusFilter,
+  billCategoriesPresent,
+  filterBills,
+  isBillFilterActive,
+  isBillOverdue,
+} from "@/lib/bills-filter-shared";
+import { CATEGORY_CONFIG, type SpendingCategory } from "@/lib/categories";
 import { BRL, MONTHS, formatDateBR } from "@/lib/month";
 import type { Attachments, Bill, BillSort, FutureBill, OwnershipFilter } from "./types";
 import type { MonthData } from "./useMonthData";
@@ -15,6 +25,15 @@ const OWNERSHIP_BADGE: Record<Bill["ownership"], { label: string; color: string;
   joint: { label: "Conjunta", color: "rgb(var(--owner-joint))", bg: "rgb(var(--owner-joint-bg))" },
   hers: { label: "Dela", color: "rgb(var(--owner-hers))", bg: "rgb(var(--owner-hers-bg))" },
 };
+
+const STATUS_CHIPS: { value: BillStatusFilter; label: string }[] = [
+  { value: "all", label: "Todas" },
+  { value: "pending", label: "A pagar" },
+  { value: "paid", label: "Pagas" },
+  { value: "overdue", label: "Vencidas" },
+];
+
+const EMPTY_FILTER: BillFilter = { query: "", status: "all", category: "all", type: "all", onlyInstallment: false };
 
 function parseAttachments(raw?: string | null): Attachments {
   if (!raw) return {};
@@ -37,6 +56,7 @@ function sortBills(bills: Bill[], sortBy: BillSort) {
 }
 
 // Aba Contas: lista enxuta (nome, vencimento, valor, check de pago); fatura abre em tela cheia.
+// Busca e filtros valem só para a lista e continuam ao trocar de mês (achar "IPVA" mês a mês).
 export default function BillsTab({
   data,
   ownershipFilter,
@@ -57,13 +77,23 @@ export default function BillsTab({
   const [openCardBillId, setOpenCardBillId] = useState<number | null>(null);
   const openCardBill = openCardBillId === null ? null : bills.find((b) => b.id === openCardBillId) ?? null;
 
-  const filtered = ownershipFilter === "all" ? bills : bills.filter((b) => b.ownership === ownershipFilter);
-  const sorted = sortBills(filtered, sortBy);
-  const total = filtered.reduce((s, b) => s + b.amount, 0);
+  const [filter, setFilter] = useState<BillFilter>(EMPTY_FILTER);
+  const patchFilter = (patch: Partial<BillFilter>) => setFilter((f) => ({ ...f, ...patch }));
 
   const now = new Date();
   const today = now.getDate();
   const isCurrentMonth = month === now.getMonth() + 1 && year === now.getFullYear();
+  const todayDay = isCurrentMonth ? today : null;
+
+  const filtered = ownershipFilter === "all" ? bills : bills.filter((b) => b.ownership === ownershipFilter);
+  const filterActive = isBillFilterActive(filter);
+  const visible = filterBills(filtered, filter, todayDay);
+  const sorted = sortBills(visible, sortBy);
+  const total = filtered.reduce((s, b) => s + b.amount, 0);
+  const visibleTotal = visible.reduce((s, b) => s + b.amount, 0);
+  // A categoria escolhida continua nas opções mesmo se sumir do mês, para dar para desmarcar.
+  const categories = billCategoriesPresent(filtered);
+  if (filter.category && filter.category !== "all" && !categories.includes(filter.category)) categories.push(filter.category);
 
   async function handleUpload(billId: number, type: "fatura" | "comprovante", file?: File) {
     if (!file) return;
@@ -102,10 +132,73 @@ export default function BillsTab({
         </div>
       ) : (
         <div className="card overflow-visible">
+          {/* Busca e filtros */}
+          <div className="px-3 py-3 border-b border-line space-y-2">
+            <label className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-bg border border-line">
+              <Search size={14} className="text-fg-muted flex-shrink-0" />
+              <input
+                value={filter.query}
+                onChange={(e) => patchFilter({ query: e.target.value })}
+                placeholder="Buscar por nome ou valor"
+                className="flex-1 min-w-0 bg-transparent text-sm outline-none"
+                aria-label="Buscar conta"
+              />
+              {filter.query && (
+                <button onClick={() => patchFilter({ query: "" })} aria-label="Limpar busca" className="text-fg-muted">
+                  <X size={14} />
+                </button>
+              )}
+            </label>
+            <div className="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1 pb-0.5">
+              {STATUS_CHIPS.filter((c) => c.value !== "overdue" || isCurrentMonth || filter.status === "overdue").map((c) => (
+                <Chip key={c.value} active={filter.status === c.value} onClick={() => patchFilter({ status: c.value })}>
+                  {c.label}
+                </Chip>
+              ))}
+              <span className="w-px h-4 flex-shrink-0 bg-line" />
+              <Chip
+                active={filter.type === "NORMAL"}
+                onClick={() => patchFilter({ type: filter.type === "NORMAL" ? "all" : "NORMAL" })}
+              >
+                Contas
+              </Chip>
+              <Chip active={filter.type === "CARD"} onClick={() => patchFilter({ type: filter.type === "CARD" ? "all" : "CARD" })}>
+                Faturas
+              </Chip>
+              <Chip active={!!filter.onlyInstallment} onClick={() => patchFilter({ onlyInstallment: !filter.onlyInstallment })}>
+                Parcelada
+              </Chip>
+              <select
+                value={filter.category}
+                onChange={(e) => patchFilter({ category: e.target.value as SpendingCategory | "all" })}
+                aria-label="Filtrar por categoria"
+                className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs border bg-transparent outline-none ${
+                  filter.category !== "all" ? "border-accent-strong bg-accent-bg text-accent" : "border-line text-fg-soft"
+                }`}
+              >
+                <option value="all">Categoria</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {CATEGORY_CONFIG[c].emoji} {CATEGORY_CONFIG[c].label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {sorted.length === 0 && (
+            <div className="p-6 text-center text-sm text-fg-muted space-y-2">
+              <p>Nenhuma conta encontrada</p>
+              <button onClick={() => setFilter(EMPTY_FILTER)} className="underline text-accent">
+                Limpar filtros
+              </button>
+            </div>
+          )}
+
           <div className="divide-y divide-line">
             {sorted.map((bill) => {
               const isCard = bill.type === "CARD";
-              const overdue = isCurrentMonth && !bill.isPaid && !!bill.dueDay && bill.dueDay < today;
+              const overdue = isBillOverdue(bill, todayDay);
               const dueIn = isCurrentMonth && bill.dueDay ? bill.dueDay - today : null;
               const dueSoon = !bill.isPaid && dueIn !== null && dueIn >= 0 && dueIn <= 3;
               const badge = OWNERSHIP_BADGE[bill.ownership];
@@ -201,10 +294,19 @@ export default function BillsTab({
             className="px-4 py-3 flex justify-between items-center rounded-b-2xl"
             style={{ background: "rgb(var(--surface-raised))", borderTop: "1px solid rgb(var(--border))" }}
           >
-            <span className="text-sm" style={{ color: "rgb(var(--text-soft))" }}>
-              {filtered.filter((b) => b.isPaid).length} de {filtered.length} pagas
-            </span>
-            <span className="text-sm font-numeric">{BRL(total)}</span>
+            {filterActive ? (
+              <span className="text-sm" style={{ color: "rgb(var(--text-soft))" }}>
+                Filtrado ({visible.length}){" "}
+                <button onClick={() => setFilter(EMPTY_FILTER)} className="underline text-xs text-accent">
+                  limpar
+                </button>
+              </span>
+            ) : (
+              <span className="text-sm" style={{ color: "rgb(var(--text-soft))" }}>
+                {filtered.filter((b) => b.isPaid).length} de {filtered.length} pagas
+              </span>
+            )}
+            <span className="text-sm font-numeric">{BRL(filterActive ? visibleTotal : total)}</span>
           </div>
         </div>
       )}

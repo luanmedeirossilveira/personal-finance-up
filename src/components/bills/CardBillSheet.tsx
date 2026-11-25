@@ -17,6 +17,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import Chip from "@/components/ui/Chip";
 import ModalPortal from "@/components/ui/ModalPortal";
 import showConfirm from "@/components/ui/confirm";
 import { BRL, formatDateBR } from "@/lib/month";
@@ -479,19 +480,5 @@ export default function CardBillSheet({
         />
       )}
     </ModalPortal>
-  );
-}
-
-function Chip({ active, onClick, children }: Readonly<{ active: boolean; onClick: () => void; children: React.ReactNode }>) {
-  return (
-    <button
-      onClick={onClick}
-      aria-pressed={active}
-      className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs border transition-colors ${
-        active ? "border-accent-strong bg-accent-bg text-accent" : "border-line text-fg-soft"
-      }`}
-    >
-      {children}
-    </button>
   );
 }

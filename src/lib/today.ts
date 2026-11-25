@@ -2,6 +2,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { getCardsUsage, type CardUsage } from "@/lib/cards";
+import { projectBalance, remainingInBudgets } from "@/lib/category-budget-shared";
 import { getDebtBalances, totalDebt } from "@/lib/debts";
 import { latestInsights, type StoredInsight } from "@/lib/insights";
 import { detectRisks } from "@/lib/risk";
@@ -125,7 +126,8 @@ export async function getTodayData(userId: number, now = new Date()): Promise<To
   const totalBills = periodBills.reduce((s, b) => s + b.amount, 0);
   const pending = periodBills.filter((b) => !b.isPaid);
   const pendingTotal = pending.reduce((s, b) => s + b.amount, 0);
-  const projected = income - totalBills;
+  // Mesma conta do "Saldo projetado" do Mês: o previsto menos o que ainda falta gastar nos limites.
+  const projected = projectBalance(income - totalBills, remainingInBudgets(budgets, spending.lines, spending.meal.limit).total);
   const debtTotal = totalDebt(debts);
 
   // ── Próximos 7 dias (com vencidas do mês corrente no topo) ────────────────
@@ -277,7 +279,7 @@ function pickInsight({
     return {
       tone: "negative",
       title: "O mês não fecha",
-      message: `As contas superam as entradas em ${BRL(-projected)}. Escolha o que adiar ou cortar antes do vencimento.`,
+      message: `As contas e o que ainda falta gastar nos limites superam as entradas em ${BRL(-projected)}. Escolha o que adiar ou cortar antes do vencimento.`,
     };
   }
 

@@ -157,7 +157,7 @@ export default function TodayView({ data }: Readonly<{ data: TodayData }>) {
                           {c.ownership === "hers" ? "dela" : c.ownership === "joint" ? "conjunto" : "seu"}
                         </span>
                       </div>
-                      <span className="text-sm font-numeric" style={{ color: c.ratio !== null && c.ratio > 1 ? "rgb(var(--negative))" : "rgb(var(--text))" }}>
+                      <span className="text-sm font-numeric" style={{ color: c.ratio !== null && c.ratio > 1 ? statusColor(c.ratio) : "rgb(var(--text))" }}>
                         {BRL(c.used)}
                         {c.monthlyLimit > 0 && (
                           <span className="text-xs font-normal" style={{ color: "rgb(var(--text-muted))" }}>
